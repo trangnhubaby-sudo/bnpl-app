@@ -3,6 +3,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import sqlite3
+import requests
 from pyvis.network import Network
 import streamlit.components.v1 as components
 import folium
@@ -144,7 +145,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ================= ================= ================= =================
-# 4. SIDEBAR DYNAMIC
+# 4. SIDEBAR - CHỌN VÀ THÊM KHÁCH HÀNG MỚI
 # ================= ================= ================= =================
 st.sidebar.markdown("### 🎛️ BẢNG ĐIỀU HÀNH THẨM ĐỊNH")
 
@@ -166,8 +167,38 @@ loan_request = st.sidebar.slider(
 
 gnn_threshold = st.sidebar.slider("⚙️ Ngưỡng Khái Quát Rủi Ro AI (Tau):", 0.50, 0.99, 0.85, 0.01)
 
+# --- KHU VỰC THÊM KHÁCH HÀNG MỚI ---
 st.sidebar.markdown("---")
-st.sidebar.caption("🔒 Bảo mật chuẩn ISO27001 & Định vị GPS Real-time Synchronized")
+st.sidebar.markdown("### ➕ THÊM KHÁCH HÀNG MỚI")
+
+with st.sidebar.form("add_customer_form"):
+    new_id = st.text_input("Mã KH mới:", value="KH-9999")
+    new_amount = st.number_input("Số tiền vay (VNĐ):", value=15000000, step=1000000)
+    new_lat = st.number_input("Vĩ độ (Latitude):", value=10.7769, format="%.4f")
+    new_lng = st.number_input("Kinh độ (Longitude):", value=106.7009, format="%.4f")
+    new_imei_option = st.selectbox(
+        "Mã IMEI Thiết Bị:",
+        ["TB-IMEI-864912 (Đen/Cảnh báo)", "TB-IMEI-990011 (Sạch)", "TB-IMEI-554433 (Sạch)"]
+    )
+    
+    submit_btn = st.form_submit_button("🚀 Gửi Đơn Vay Về API")
+
+    if submit_btn:
+        payload = {
+            "customer_id": new_id,
+            "loan_amount": float(new_amount),
+            "latitude": float(new_lat),
+            "longitude": float(new_lng),
+            "imei": new_imei_option.split(" ")[0]
+        }
+        try:
+            res = requests.post("http://localhost:8000/api/v1/submit-loan", json=payload)
+            if res.status_code == 200:
+                st.success(f"✅ Đã thêm {new_id} thành công!")
+            else:
+                st.error("❌ Lỗi gửi dữ liệu về API!")
+        except Exception:
+            st.error("⚠️ Bạn chưa bật server API (chạy python api_server.py)")
 
 # ================= ================= ================= =================
 # 5. KPIS METRICS
