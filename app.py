@@ -289,17 +289,16 @@ with st.sidebar.form("new_loan_application_form"):
     in_cccd = st.text_input("Số CCCD/CMND:", value="012095006789")
     in_amount = st.number_input("Khoản Vay Yêu Cầu (VNĐ):", value=20000000, step=1000000)
     
-    in_ip_option = st.selectbox(
-        "IP Khách Hàng Truy Cập:", 
-        ["104.28.19.14 (Trùng IP trong cụm đen)", "171.224.180.1 (IP Sạch Viettel)", "27.72.90.15 (IP Sạch VNPT)"]
+    ip_address = st.text_input(
+    label="IP Khách Hàng Truy Cập:", 
+    value="104.28.19.14", 
+    placeholder="Nhập địa chỉ IP..."
     )
     
-    in_device_option = st.selectbox(
-        "Môi Trường & Thiết Bị:", 
-        [
-            "Chrome/Windows (Trùng vân tay thiết bị nghi vấn)", 
-            "Safari/iPhone 15 Pro (Thiết bị mới)", 
-            "Edge/macOS (Thiết bị mới)"
+    user_agent = st.text_input(
+    label="Môi Trường & Thiết Bị:", 
+    value="Chrome/Windows", 
+    placeholder="Nhập User-Agent hoặc Thiết bị..."
         ]
     )
     
