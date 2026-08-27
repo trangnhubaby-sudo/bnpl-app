@@ -3,7 +3,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import sqlite3
-import requests
+from datetime import datetime
 from pyvis.network import Network
 import streamlit.components.v1 as components
 import folium
@@ -11,7 +11,7 @@ from streamlit_folium import st_folium
 from streamlit_autorefresh import st_autorefresh
 
 # ================= ================= ================= =================
-# 1. CẤU HÌNH HỆ THỐNG & TỰ ĐỘNG ĐỒNG BỘ (3 GIÂY)
+# 1. CẤU HÌNH TRANG WEB & TỰ ĐỘNG LÀM MỚI (3 GIÂY)
 # ================= ================= ================= =================
 st.set_page_config(
     page_title="NEXUS FRAUD SHIELD // Enterprise Radar",
@@ -20,10 +20,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Tự động làm mới trang mỗi 3000ms để đồng bộ CSDL
+# Tự động làm mới trang mỗi 3 giây để cập nhật khách hàng mới thêm vào
 st_autorefresh(interval=3000, key="realtime_sync")
 
-# Style CSS Dark Mode cao cấp
+# Style CSS Dark Mode giao diện cao cấp
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
@@ -63,7 +63,7 @@ st.markdown("""
     .kpi-title { color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }
     .kpi-value { font-size: 1.9rem; font-weight: 800; color: #f8fafc; font-family: 'JetBrains Mono', monospace; margin-top: 4px; }
     
-    /* Banners */
+    /* Risk Banners */
     .risk-banner-danger {
         background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(127, 29, 29, 0.25) 100%);
         border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 12px; padding: 1.2rem; color: #fca5a5;
@@ -79,7 +79,74 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ================= ================= ================= =================
-# 2. TẢI DỮ LIỆU TỪ SQLITE & DỰNG ĐỒ THỊ
+# 2. KHỞI TẠO CSDL SQLITE & THÊM DỮ LIỆU KHÁCH HÀNG MỚI
+# ================= ================= ================= =================
+def init_and_seed_db():
+    conn = sqlite3.connect("fraud_data.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS loan_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            customer_id TEXT UNIQUE,
+            loan_amount REAL,
+            ip_address TEXT,
+            latitude REAL,
+            longitude REAL,
+            imei TEXT,
+            status TEXT,
+            created_at TEXT
+        )
+    """)
+    
+    # Tạo dữ liệu mẫu ban đầu nếu bảng còn trống
+    cursor.execute("SELECT COUNT(*) FROM loan_requests")
+    if cursor.fetchone()[0] == 0:
+        sample_data = [
+            ("KH-1001", 15000000.0, "104.28.19.14", 10.7769, 106.7009, "TB-IMEI-864912", "RỦI RO RẤT CAO", "2026-08-27 10:00:00"),
+            ("KH-1002", 20000000.0, "104.28.19.14", 10.7780, 106.7015, "TB-IMEI-864912", "RỦI RO RẤT CAO", "2026-08-27 10:05:00"),
+            ("KH-1003", 12000000.0, "113.161.72.14", 10.7720, 106.6980, "TB-IMEI-990011", "XÁC MINH AN TOÀN", "2026-08-27 10:10:00")
+        ]
+        cursor.executemany("""
+            INSERT INTO loan_requests (customer_id, loan_amount, ip_address, latitude, longitude, imei, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, sample_data)
+        
+    conn.commit()
+    conn.close()
+
+# Tự động tạo DB khi bật app
+init_and_seed_db()
+
+def save_customer_to_db(customer_id, loan_amount, latitude, longitude, imei):
+    """Hàm thêm trực tiếp khách hàng vào SQLite (Không qua API trung gian để tránh lỗi kết nối)"""
+    # IP mặc định để kiểm tra cụm rủi ro
+    assigned_ip = "104.28.19.14" if imei == "TB-IMEI-864912" else "113.161.72.14"
+    is_fraud = (imei == "TB-IMEI-864912") or (assigned_ip == "104.28.19.14")
+    status = "RỦI RO RẤT CAO" if is_fraud else "XÁC MINH AN TOÀN"
+
+    conn = sqlite3.connect("fraud_data.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO loan_requests (customer_id, loan_amount, ip_address, latitude, longitude, imei, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(customer_id) DO UPDATE SET
+            loan_amount=excluded.loan_amount,
+            ip_address=excluded.ip_address,
+            latitude=excluded.latitude,
+            longitude=excluded.longitude,
+            imei=excluded.imei,
+            status=excluded.status,
+            created_at=excluded.created_at
+    """, (
+        customer_id, loan_amount, assigned_ip, latitude, longitude, imei, status,
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ))
+    conn.commit()
+    conn.close()
+    return status
+
+# ================= ================= ================= =================
+# 3. TẢI DỮ LIỆU VÀ DỰNG ĐỒ THỊ NETWORKS
 # ================= ================= ================= =================
 def load_data_and_build_graph():
     conn = sqlite3.connect("fraud_data.db")
@@ -91,7 +158,6 @@ def load_data_and_build_graph():
         conn.close()
 
     G = nx.Graph()
-    
     if not df.empty:
         for _, row in df.iterrows():
             u = row["customer_id"]
@@ -102,23 +168,16 @@ def load_data_and_build_graph():
             
             # Node Khách hàng
             G.add_node(
-                u,
-                label=u,
-                node_type="Khách Hàng",
-                status=status,
+                u, label=u, node_type="Khách Hàng", status=status,
                 risk_score=94.85 if is_fraud else 4.12,
-                lat=row["latitude"],
-                lng=row["longitude"],
-                loan_amount=row["loan_amount"],
-                color="#ef4444" if is_fraud else "#10b981",
-                shape="dot"
+                lat=row["latitude"], lng=row["longitude"], loan_amount=row["loan_amount"],
+                color="#ef4444" if is_fraud else "#10b981", shape="dot"
             )
-            
-            # Node Hạ tầng (IP & IMEI)
+            # Node Hạ tầng (IP / IMEI)
             G.add_node(ip, label=f"IP: {ip}", node_type="IP", color="#ef4444" if is_fraud else "#3b82f6", shape="diamond")
             G.add_node(imei, label=f"IMEI: {imei[-6:]}", node_type="Thiết Bị", color="#8b5cf6", shape="triangle")
 
-            # Mối liên kết đồ thị
+            # Tạo liên kết mạng đồ thị
             G.add_edge(u, ip)
             G.add_edge(u, imei)
 
@@ -127,7 +186,7 @@ def load_data_and_build_graph():
 G, df_raw = load_data_and_build_graph()
 
 # ================= ================= ================= =================
-# 3. HEADER
+# 4. HEADER CHÍNH
 # ================= ================= ================= =================
 st.markdown("""
 <div class="header-container">
@@ -139,13 +198,13 @@ st.markdown("""
     </div>
     <div class="live-badge">
         <div class="pulse-dot"></div>
-        CSDL SQLITE: ĐỒNG BỘ TỰ ĐỘNG (3s)
+        HỆ THỐNG ALL-IN-ONE: TỰ ĐỘNG ĐỒNG BỘ
     </div>
 </div>
 """, unsafe_allow_html=True)
 
 # ================= ================= ================= =================
-# 4. SIDEBAR - CHỌN VÀ THÊM KHÁCH HÀNG MỚI
+# 5. SIDEBAR - ĐIỀU HÀNH & THÊM KHÁCH HÀNG MỚI
 # ================= ================= ================= =================
 st.sidebar.markdown("### 🎛️ BẢNG ĐIỀU HÀNH THẨM ĐỊNH")
 
@@ -167,7 +226,7 @@ loan_request = st.sidebar.slider(
 
 gnn_threshold = st.sidebar.slider("⚙️ Ngưỡng Khái Quát Rủi Ro AI (Tau):", 0.50, 0.99, 0.85, 0.01)
 
-# --- KHU VỰC THÊM KHÁCH HÀNG MỚI ---
+# --- FORM THÊM KHÁCH HÀNG MỚI (TRỰC TIẾP TRÊN FORM) ---
 st.sidebar.markdown("---")
 st.sidebar.markdown("### ➕ THÊM KHÁCH HÀNG MỚI")
 
@@ -181,27 +240,16 @@ with st.sidebar.form("add_customer_form"):
         ["TB-IMEI-864912 (Đen/Cảnh báo)", "TB-IMEI-990011 (Sạch)", "TB-IMEI-554433 (Sạch)"]
     )
     
-    submit_btn = st.form_submit_button("🚀 Gửi Đơn Vay Về API")
+    submit_btn = st.form_submit_button("🚀 Lưu Hồ Sơ Vay Mới")
 
     if submit_btn:
-        payload = {
-            "customer_id": new_id,
-            "loan_amount": float(new_amount),
-            "latitude": float(new_lat),
-            "longitude": float(new_lng),
-            "imei": new_imei_option.split(" ")[0]
-        }
-        try:
-            res = requests.post("http://localhost:8000/api/v1/submit-loan", json=payload)
-            if res.status_code == 200:
-                st.success(f"✅ Đã thêm {new_id} thành công!")
-            else:
-                st.error("❌ Lỗi gửi dữ liệu về API!")
-        except Exception:
-            st.error("⚠️ Bạn chưa bật server API (chạy python api_server.py)")
+        imei_clean = new_imei_option.split(" ")[0]
+        status_res = save_customer_to_db(new_id, float(new_amount), float(new_lat), float(new_lng), imei_clean)
+        st.success(f"✅ Đã thêm thành công **{new_id}**! Trạng thái: **{status_res}**")
+        st.rerun()
 
 # ================= ================= ================= =================
-# 5. KPIS METRICS
+# 6. KPIS METRICS
 # ================= ================= ================= =================
 total_users = len(user_nodes)
 fraud_count = sum(1 for u in user_nodes if G.nodes[u].get("status") == "RỦI RO RẤT CAO")
@@ -215,12 +263,12 @@ with k2:
 with k3:
     st.markdown(f'<div class="kpi-card"><div class="kpi-title">HẠ TẦNG DÙNG CHUNG</div><div class="kpi-value">{total_infra}</div><div style="color:#38bdf8;font-size:0.75rem;margin-top:2px;">🌐 IP / IMEI liên kết</div></div>', unsafe_allow_html=True)
 with k4:
-    st.markdown(f'<div class="kpi-card" style="border-left: 4px solid #8b5cf6;"><div class="kpi-title">TỐC ĐỘ ĐỒNG BỘ</div><div class="kpi-value" style="color:#c084fc;">3.0 s</div><div style="color:#c084fc;font-size:0.75rem;margin-top:2px;">⚡ Quét CSDL liên tục</div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="kpi-card" style="border-left: 4px solid #8b5cf6;"><div class="kpi-title">TRẠNG THÁI HỆ THỐNG</div><div class="kpi-value" style="color:#c084fc; font-size: 1.4rem; padding-top: 5px;">ONLINE</div><div style="color:#c084fc;font-size:0.75rem;margin-top:2px;">⚡ Tự động lưu SQLite</div></div>', unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ================= ================= ================= =================
-# 6. KẾT QUẢ QUYẾT ĐỊNH & THÔNG SỐ ĐỒ THỊ
+# 7. KẾT QUẢ QUYẾT ĐỊNH & THÔNG SỐ ĐỒ THỊ
 # ================= ================= ================= =================
 if selected_user != "N/A":
     user_risk_score = user_data.get("risk_score", 0.0)
@@ -258,7 +306,7 @@ if selected_user != "N/A":
         
         df_metrics = pd.DataFrame({
             "Tiêu Chí Đồ Thị": ["Số Liên Kết Trực Tiếp", "Hệ Số Gom Cụm", "Độ Trung Tâm Mạng", "Trạng Thái Cụm"],
-            "Giá Trị": [f"{len(neighbors)} nút", f"{nx.clustering(G, selected_user):.4f}", f"{degree_cent:.4f}", "100% Cụm Bùng Nợ" if is_high_risk else "0.0% An Toàn"],
+            "Giá Trị": [f"{len(neighbors)} nút", f"{nx.clustering(G, selected_user):.4f}", f"{degree_cent:.4f}", "100% Cụm Bùng NỢ" if is_high_risk else "0.0% An Toàn"],
             "Trạng Thái AI": ["⚠️ BẤT THƯỜNG" if len(neighbors) > 2 else "🟢 BÌNH THƯỜNG", "🚨 CAO" if is_high_risk else "🟢 THẤP", "⚠️ CAO" if is_high_risk else "🟢 BÌNH THƯỜNG", "🔴 NGUY HẠI" if is_high_risk else "🟢 AN TOÀN"]
         })
         st.dataframe(df_metrics, use_container_width=True, hide_index=True)
@@ -266,7 +314,7 @@ if selected_user != "N/A":
 st.markdown("---")
 
 # ================= ================= ================= =================
-# 7. TABS VISUALIZATION (BẢN ĐỒ GPS & ĐỒ THỊ MẠNG)
+# 8. TABS VISUALIZATION (BẢN ĐỒ GPS, ĐỒ THỊ & BẢNG DỮ LIỆU)
 # ================= ================= ================= =================
 tab_map, tab_graph, tab_data = st.tabs([
     "📍 BẢN ĐỒ VỊ TRÍ NGƯỜI DÙNG (GPS MAP)",
@@ -283,7 +331,6 @@ with tab_map:
 
         m = folium.Map(location=[user_lat, user_lng], zoom_start=13, tiles="CartoDB dark_matter")
 
-        # Ghim vị trí người dùng đang chọn
         icon_color = "red" if is_high_risk else "green"
         folium.Marker(
             [user_lat, user_lng],
@@ -292,7 +339,6 @@ with tab_map:
             icon=folium.Icon(color=icon_color, icon="user", prefix="fa")
         ).add_to(m)
 
-        # Vòng tròn cảnh báo nếu rủi ro cao
         if is_high_risk:
             folium.Circle(
                 location=[user_lat, user_lng],
@@ -313,7 +359,7 @@ with tab_graph:
         for node in net.nodes:
             if node["id"] == selected_user:
                 node["size"] = 35
-                node["color"] = "#facc15" # Vàng rực cho nút đang chọn
+                node["color"] = "#facc15" # Nút màu vàng đang chọn
             elif node.get("node_type") == "Khách Hàng":
                 node["size"] = 20
 
@@ -323,7 +369,7 @@ with tab_graph:
 
 # --- TAB 3: DỮ LIỆU SQLITE ---
 with tab_data:
-    st.markdown("### 📋 Bảng Dữ Liệu Hồ Sơ Đăng Ký Trong CSDL")
+    st.markdown("### 📋 Bảng Dữ Liệu Hồ Sơ Đăng Ký Trong CSDL SQLite")
     if not df_raw.empty:
         st.dataframe(df_raw, use_container_width=True, hide_index=True)
     else:

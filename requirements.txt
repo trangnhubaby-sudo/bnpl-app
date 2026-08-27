@@ -1,10 +1,6 @@
 streamlit
-fastapi
-uvicorn
-pydantic
-networkx
 pandas
-numpy
+networkx
 pyvis
 folium
 streamlit-folium
