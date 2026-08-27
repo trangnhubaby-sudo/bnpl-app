@@ -70,10 +70,10 @@ st.markdown('''
         color: #ff9f43;
     }
 
-    /* 2. NAVIGATION MENU (KHUNG TRẮNG TO BẰNG KHUNG CAM) */
+    /* 2. NAVIGATION MENU (TẤT CẢ CÁC KHUNG TRẮNG TO BẰNG KHUNG CAM) */
     div[data-testid="stHorizontalBlock"] {
-        gap: 8px !important;
-        padding: 0 1rem !important;
+        gap: 10px !important;
+        padding: 0 1.5rem !important;
         align-items: center !important;
     }
 
@@ -81,18 +81,19 @@ st.markdown('''
         padding: 0px !important;
     }
 
+    /* Đồng bộ kích thước nút trắng và nút cam qua từng cột chia đều */
     div[data-testid="column"] > div > div > button {
         background-color: #ffffff !important;
         border: none !important;
         border-radius: 10px !important;
         color: #1a202c !important;
         font-weight: 800 !important;
-        font-size: 1.15rem !important;
-        padding: 0.9rem 0.5rem !important;
+        font-size: 1.05rem !important;
+        padding: 0.9rem 0.2rem !important;
         width: 100% !important;
         text-align: center !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.3px !important;
+        letter-spacing: 0.2px !important;
         transition: all 0.2s ease-in-out !important;
         box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15) !important;
         white-space: nowrap !important;
@@ -109,14 +110,14 @@ st.markdown('''
         background: linear-gradient(135deg, #ff9f43 0%, #ff8c00 100%);
         color: #000000 !important;
         font-weight: 900 !important;
-        font-size: 1.25rem !important;
-        padding: 0.9rem 0.5rem;
+        font-size: 1.1rem !important;
+        padding: 0.9rem 0.2rem;
         border-radius: 10px;
         text-align: center;
         box-shadow: 0 4px 15px rgba(255, 159, 67, 0.4);
         display: block;
         width: 100%;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.2px;
         white-space: nowrap;
     }
 
@@ -462,7 +463,9 @@ st.markdown('''
 </div>
 ''', unsafe_allow_html=True)
 
-n_col1, n_col2, n_col3, n_col4, n_col5, n_col6 = st.columns([1.2, 1.3, 1.7, 1.4, 2.0, 1.6])
+# Chia 6 cột đều nhau tuyệt đối để tất cả các khung (trắng và cam) có kích thước bằng nhau
+cols = st.columns(6)
+n_col1, n_col2, n_col3, n_col4, n_col5, n_col6 = cols[0], cols[1], cols[2], cols[3], cols[4], cols[5]
 
 with n_col1:
     if st.button("TRANG CHỦ", key="btn_home"):
