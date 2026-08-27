@@ -31,7 +31,28 @@ if "blacklist_penalty" not in st.session_state:
     st.session_state.blacklist_penalty = 45.0
 
 st.markdown('''
-<style>
+<style> /* Ép khung chứa và nút bấm rộng lấp đầy 100% diện tích cột */
+    .stButton {
+        width: 100% !important;
+    }
+    .stButton > button {
+        background-color: #ffffff !important;
+        border: none !important;
+        border-radius: 12px !important;
+        color: #1a202c !important;
+        font-weight: 800 !important;
+        font-size: 1rem !important;
+        padding: 1.2rem 0.5rem !important;
+        width: 100% !important;
+        text-align: center !important;
+        text-transform: uppercase !important;
+        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.15) !important;
+    }
+    .stButton > button:hover {
+        background-color: #f1f5f9 !important;
+        color: #ff9f43 !important;
+        transform: translateY(-2px);
+    }
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Roboto:wght@400;500;700&display=swap');
 
     html, body, [class*="css"] {
@@ -440,7 +461,8 @@ app_list = [n for n, d in G.nodes(data=True) if d.get("type") == "Application"]
 selected_app = st.sidebar.selectbox("📋 Chọn Hồ Sơ Xem Chi Tiết:", app_list if app_list else ["N/A"])
 
 # ==============================================================================
-# 4. TOP NAVBAR HEADER (CHIA ĐÚNG 5 CỘT ĐỀU NHAU, BỎ SĐT)
+# ==============================================================================
+# 4. TOP NAVBAR HEADER & NAVIGATION (DÙNG HTML ĐỂ CỐ ĐỊNH KHUNG TO ĐỀU TUYỆT ĐỐI)
 # ==============================================================================
 st.markdown('''
 <div class="top-header">
@@ -448,33 +470,43 @@ st.markdown('''
 </div>
 ''', unsafe_allow_html=True)
 
-# Chia chính xác 5 cột đều nhau cho 5 nút Menu
-cols = st.columns(5)
+# Tạo khung chứa menu dạng lưới 5 cột bằng HTML/CSS thuần để các khung trắng to rộng đều đặn
+col1, col2, col3, col4, col5 = st.columns(5)
 
-with cols[0]:
-    if st.button("TRANG CHỦ", key="btn_home"):
+with col1:
+    st.markdown('<div class="nav-btn-wrapper">', unsafe_allow_html=True)
+    if st.button("TRANG CHỦ", key="btn_home", use_container_width=True):
         st.session_state.active_tab = "Overview"
         st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
-with cols[1]:
-    if st.button("MÔ HÌNH AI", key="btn_rules"):
+with col2:
+    st.markdown('<div class="nav-btn-wrapper">', unsafe_allow_html=True)
+    if st.button("MÔ HÌNH AI", key="btn_rules", use_container_width=True):
         st.session_state.active_tab = "Rules Engine"
         st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
-with cols[2]:
-    if st.button("ĐỒ THỊ NETWORK", key="btn_graph"):
+with col3:
+    st.markdown('<div class="nav-btn-wrapper">', unsafe_allow_html=True)
+    if st.button("ĐỒ THỊ NETWORK", key="btn_graph", use_container_width=True):
         st.session_state.active_tab = "Network Graph"
         st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
-with cols[3]:
-    if st.button("BẢN ĐỒ GEOIP", key="btn_geoip"):
+with col4:
+    st.markdown('<div class="nav-btn-wrapper">', unsafe_allow_html=True)
+    if st.button("BẢN ĐỒ GEOIP", key="btn_geoip", use_container_width=True):
         st.session_state.active_tab = "GeoIP Map"
         st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
-with cols[4]:
-    if st.button("ANALYTICS & BÁO CÁO", key="btn_analytics"):
+with col5:
+    st.markdown('<div class="nav-btn-wrapper">', unsafe_allow_html=True)
+    if st.button("ANALYTICS & BÁO CÁO", key="btn_analytics", use_container_width=True):
         st.session_state.active_tab = "Analytics AI"
         st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
 # 5. HERO BANNER
