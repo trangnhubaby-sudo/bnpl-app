@@ -13,27 +13,33 @@ from streamlit_autorefresh import st_autorefresh
 # 1. ENTERPRISE PAGE CONFIG & MODERN DARK UI STYLING
 # ==============================================================================
 st.set_page_config(
-    page_title="NEXUS Operating System | Enterprise Risk Platform",
+    page_title="NEXUS Risk Platform | Enterprise BNPL Fraud Engine",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Tự động làm mới dữ liệu
-st_autorefresh(interval=15000, key="nexus_sync_v7")
+# Autorefresh mỗi 15 giây
+st_autorefresh(interval=15000, key="nexus_enterprise_sync")
 
-# Khởi tạo trạng thái Navigation Tab
+# Khởi tạo Session State cho Navigation & Rules Engine
 if "active_tab" not in st.session_state:
-    st.session_state.active_tab = "Tổng Quan"
+    st.session_state.active_tab = "Overview"
+if "risk_threshold" not in st.session_state:
+    st.session_state.risk_threshold = 50.0
+if "proxy_penalty" not in st.session_state:
+    st.session_state.proxy_penalty = 40.0
+if "blacklist_penalty" not in st.session_state:
+    st.session_state.blacklist_penalty = 45.0
 
-# Custom CSS
+# Enterprise Dark Theme CSS
 st.markdown('''
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
     :root {
-        --bg-dark: #070c14;
-        --card-bg: #0f172a;
+        --bg-dark: #050811;
+        --card-bg: #0e1726;
         --card-border: #1e293b;
         --accent-blue: #38bdf8;
         --accent-purple: #c084fc;
@@ -53,16 +59,15 @@ st.markdown('''
         background-color: var(--bg-dark);
     }
 
-    /* Styling Top Nav Container */
+    /* Top Navbar Layout */
     .top-navbar-container {
-        background: #0d1527;
+        background: #0b1120;
         border: 1px solid #1e293b;
         border-radius: 12px;
-        padding: 0.5rem 1rem;
+        padding: 0.6rem 1.2rem;
         margin-bottom: 1.5rem;
         box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
     }
-
     .brand-logo {
         width: 38px;
         height: 38px;
@@ -73,7 +78,7 @@ st.markdown('''
         justify-content: center;
         font-weight: 800;
         font-size: 1.2rem;
-        color: #070c14;
+        color: #050811;
     }
     .brand-name {
         font-weight: 800;
@@ -84,14 +89,14 @@ st.markdown('''
         -webkit-text-fill-color: transparent;
     }
 
-    /* Custom Streamlit Buttons in Navbar to look like Tab Links */
+    /* Navbar Tab Buttons Styling */
     div[data-testid="stColumn"] > div > div > button {
         background-color: transparent !important;
         border: none !important;
         color: #94a3b8 !important;
         font-weight: 600 !important;
-        font-size: 0.9rem !important;
-        padding: 0.5rem 0.8rem !important;
+        font-size: 0.88rem !important;
+        padding: 0.5rem 0.75rem !important;
         border-radius: 6px !important;
         transition: all 0.2s ease !important;
     }
@@ -100,9 +105,9 @@ st.markdown('''
         background: rgba(56, 189, 248, 0.08) !important;
     }
 
-    /* Hero Banner Styling */
+    /* Hero Banner */
     .hero-carousel-container {
-        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #090d16 100%);
+        background: linear-gradient(135deg, #0e1726 0%, #1e1b4b 50%, #080d1a 100%);
         border: 1px solid #334155;
         border-radius: 16px;
         padding: 2rem 2.5rem;
@@ -134,7 +139,7 @@ st.markdown('''
 
     /* Cards Grid */
     .feature-card {
-        background: #0f172a;
+        background: #0e1726;
         border: 1px solid #1e293b;
         border-radius: 14px;
         padding: 1.25rem;
@@ -143,7 +148,7 @@ st.markdown('''
     }
     .card-banner {
         width: 100%;
-        height: 90px;
+        height: 85px;
         background: #1e293b;
         border-radius: 10px;
         margin-bottom: 0.8rem;
@@ -162,18 +167,19 @@ st.markdown('''
         font-size: 0.83rem;
         color: #94a3b8;
         line-height: 1.5;
+        margin-bottom: 0.8rem;
     }
 
     /* Sidebar */
     div[data-testid="stSidebar"] {
-        background-color: #060a12 !important;
+        background-color: #040710 !important;
         border-right: 1px solid #1a2333;
     }
 </style>
 ''', unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. KHỞI TẠO CSDL SQLITE VÀ XỬ LÝ DỮ LIỆU
+# 2. CSDL SQLITE & GRAPH ENGINE
 # ==============================================================================
 def init_db():
     conn = sqlite3.connect("bnpl_enterprise.db")
@@ -219,15 +225,17 @@ def add_new_application(name, nid, amount, ip, fp, lat, lng, is_proxy):
     count = cur.fetchone()[0] + 1
     app_id = f"APP-88{count:02d}"
     
-    # AI Engine đơn giản đánh giá Risk Score
+    # AI Rules Scoring Engine linh hoạt dựa trên Session State
     risk = 10.0
-    if is_proxy: risk += 40.0
-    # Kiểm tra trùng IP/Device với hồ sơ gian lận trước
+    if is_proxy: 
+        risk += st.session_state.proxy_penalty
+    
     cur.execute("SELECT COUNT(*) FROM loan_applications WHERE (ip_address=? OR device_hash=?) AND decision='REJECTED'", (ip, fp))
     if cur.fetchone()[0] > 0:
-        risk += 45.0
+        risk += st.session_state.blacklist_penalty
     
-    decision = "REJECTED" if risk >= 50.0 else "APPROVED"
+    risk = min(risk, 99.9)
+    decision = "REJECTED" if risk >= st.session_state.risk_threshold else "APPROVED"
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     cur.execute('''
@@ -261,13 +269,29 @@ def fetch_data():
 
     return G, df
 
+def render_pyvis_graph(graph, highlight_node=None, height="500px"):
+    net = Network(height=height, width="100%", bgcolor="#050811", font_color="#f8fafc")
+    net.from_nx(graph)
+    net.barnes_hut(gravity=-3000, central_gravity=0.3, spring_length=90)
+    
+    for node in net.nodes:
+        if highlight_node and node["id"] == highlight_node:
+            node["size"] = 32
+            node["color"] = "#facc15"
+        elif node.get("type") == "Application":
+            node["size"] = 18
+
+    net.save_graph("temp_graph.html")
+    with open("temp_graph.html", "r", encoding="utf-8") as f:
+        return f.read()
+
 init_db()
 G, df_apps = fetch_data()
 
 # ==============================================================================
-# SIDEBAR: KHU VỰC NHẬP HỒ SƠ MỚI & BỘ LỌC
+# 3. SIDEBAR: TẠO HỒ SƠ VAY MỚI & THÔNG TIN HỆ THỐNG
 # ==============================================================================
-st.sidebar.title("🛠️ Quản Lý Hệ Thống")
+st.sidebar.title("🛠️ Risk Management Console")
 
 with st.sidebar.expander("➕ **NHẬP HỒ SƠ VAY MỚI**", expanded=True):
     with st.form("add_loan_form", clear_on_submit=True):
@@ -283,23 +307,23 @@ with st.sidebar.expander("➕ **NHẬP HỒ SƠ VAY MỚI**", expanded=True):
             new_lng = st.number_input("Kinh độ", value=106.7009, format="%.4f")
         new_proxy = st.checkbox("Sử dụng Proxy/VPN nghi vấn?")
         
-        submit_btn = st.form_submit_button("🚀 Gửi Đơn Vay & AI Scored", use_container_width=True)
+        submit_btn = st.form_submit_button("🚀 Gửi Đơn Vay & AI Evaluation", use_container_width=True)
         if submit_btn:
             app_id, risk, decision = add_new_application(new_name, new_nid, new_amount, new_ip, new_fp, new_lat, new_lng, new_proxy)
             if decision == "APPROVED":
-                st.success(f"✅ Đã duyệt đơn {app_id}! Risk: {risk}%")
+                st.sidebar.success(f"✅ Đã duyệt đơn {app_id}! Risk: {risk}%")
             else:
-                st.error(f"🚨 Từ chối đơn {app_id}! Risk: {risk}%")
+                st.sidebar.error(f"🚨 Từ chối đơn {app_id}! Risk: {risk}%")
             st.rerun()
 
 app_list = [n for n, d in G.nodes(data=True) if d.get("type") == "Application"]
 selected_app = st.sidebar.selectbox("📋 Chọn Hồ Sơ Xem Chi Tiết:", app_list if app_list else ["N/A"])
 
 # ==============================================================================
-# SECTION 1: TOP NAVBAR (ĐÃ ĐƯỢC TÍCH HỢP TƯƠNG TÁC THỰC SỰ)
+# 4. SECTION 1: TOP NAVBAR INTERACTIVE
 # ==============================================================================
 st.markdown('<div class="top-navbar-container">', unsafe_allow_html=True)
-nav_col1, nav_col2, nav_col3 = st.columns([0.28, 0.58, 0.14])
+nav_col1, nav_col2, nav_col3 = st.columns([0.26, 0.60, 0.14])
 
 with nav_col1:
     st.markdown('''
@@ -311,11 +335,11 @@ with nav_col1:
 
 with nav_col2:
     t1, t2, t3, t4, t5 = st.columns(5)
-    if t1.button("🌐 Tổng Quan"): st.session_state.active_tab = "Tổng Quan"
-    if t2.button("🕸️ Đồ Thị Mạng"): st.session_state.active_tab = "Đồ Thị Mạng"
+    if t1.button("🌐 Tổng Quan"): st.session_state.active_tab = "Overview"
+    if t2.button("🕸️ Đồ Thị Mạng"): st.session_state.active_tab = "Network Graph"
     if t3.button("📊 Analytics AI"): st.session_state.active_tab = "Analytics AI"
-    if t4.button("📍 Bản Đồ Vị Trí"): st.session_state.active_tab = "Bản Đồ Vị Trí"
-    if t5.button("⚙️ Rules Cấu Hình"): st.session_state.active_tab = "Rules Cấu Hình"
+    if t4.button("📍 Bản Đồ Vị Trí"): st.session_state.active_tab = "GeoIP Map"
+    if t5.button("⚙️ Rules Cấu Hình"): st.session_state.active_tab = "Rules Engine"
 
 with nav_col3:
     st.markdown('''
@@ -328,7 +352,7 @@ with nav_col3:
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# HERO BANNER CAROUSEL SLIDER
+# 5. HERO BANNER CAROUSEL
 # ==============================================================================
 if "slide_idx" not in st.session_state:
     st.session_state.slide_idx = 0
@@ -345,7 +369,7 @@ slides = [
         "desc": "Truy vết tức thì các nhóm đối tượng sử dụng chung 1 phần cứng điện thoại/máy tính để đăng ký nhiều khoản vay cùng lúc."
     },
     {
-        "badge": "MAP SPATIAL GEOLOCATION MATRIX",
+        "badge": "🗺️ SPATIAL GEOLOCATION MATRIX",
         "title": "Phân Tích Mật Độ Gian Lận Theo Tọa Độ Địa Lý",
         "desc": "Tích hợp GIS GeoIP theo dõi chính xác vị trí thực tế của đơn vay, phát hiện việc giả lập vị trí thông qua VPN hoặc Proxy."
     }
@@ -373,12 +397,11 @@ with c_btn:
         st.rerun()
 
 # ==============================================================================
-# DYNAMIC VIEW CONTROLLER (XỬ LÝ CHUYỂN TRANG THEO CÁC NÚT TOP NAV)
+# 6. DYNAMIC TAB VIEW CONTROLLER (XỬ LÝ TOÀN BỘ CHỨC NĂNG BÊN TRONG)
 # ==============================================================================
-st.markdown(f"### 📌 Đang hiển thị view: **{st.session_state.active_tab}**")
 
-if st.session_state.active_tab == "Tổng Quan":
-    # 3 CARDS FEATURE GRID
+# TAB 1: OVERVIEW (TỔNG QUAN)
+if st.session_state.active_tab == "Overview":
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown('''
@@ -388,6 +411,10 @@ if st.session_state.active_tab == "Tổng Quan":
             <div class="card-text">Mô phỏng cụm liên kết đa chiều giữa đơn vay, IP và Fingerprint thiết bị để phát hiện vòng bùng nợ.</div>
         </div>
         ''', unsafe_allow_html=True)
+        if st.button("Mở Đồ Thị Mạng ➔", key="go_graph", use_container_width=True):
+            st.session_state.active_tab = "Network Graph"
+            st.rerun()
+
     with c2:
         st.markdown('''
         <div class="feature-card">
@@ -396,6 +423,10 @@ if st.session_state.active_tab == "Tổng Quan":
             <div class="card-text">Bảng tổng hợp chỉ số rủi ro, ma trận xét duyệt tự động và chi tiết các trường dữ liệu nghi vấn.</div>
         </div>
         ''', unsafe_allow_html=True)
+        if st.button("Mở Analytics AI ➔", key="go_analytics", use_container_width=True):
+            st.session_state.active_tab = "Analytics AI"
+            st.rerun()
+
     with c3:
         st.markdown('''
         <div class="feature-card">
@@ -404,71 +435,81 @@ if st.session_state.active_tab == "Tổng Quan":
             <div class="card-text">Theo dõi bản đồ vị trí thực tế của khách hàng vay, phát hiện VPN/Proxy che giấu vị trí.</div>
         </div>
         ''', unsafe_allow_html=True)
-    
+        if st.button("Mở Bản Đồ Vị Trí ➔", key="go_map", use_container_width=True):
+            st.session_state.active_tab = "GeoIP Map"
+            st.rerun()
+
     st.markdown("<br>", unsafe_allow_html=True)
     col_graph, col_info = st.columns([1.8, 1.2])
     
     with col_graph:
-        st.markdown("##### 🕸️ Mạng Lưới Đồ Thị Mẫu")
-        net = Network(height="420px", width="100%", bgcolor="#070c14", font_color="#f8fafc")
-        net.from_nx(G)
-        net.barnes_hut(gravity=-3000, central_gravity=0.3, spring_length=90)
-        
-        for node in net.nodes:
-            if node["id"] == selected_app:
-                node["size"] = 30
-                node["color"] = "#facc15"
-            elif node.get("type") == "Application":
-                node["size"] = 18
-
-        net.save_graph("graph_overview.html")
-        with open("graph_overview.html", "r", encoding="utf-8") as f:
-            components.html(f.read(), height=440)
+        st.markdown("##### 🕸️ Mạng Lưới Đồ Thị Liên Kết Đơn Vay")
+        graph_html = render_pyvis_graph(G, highlight_node=selected_app, height="430px")
+        components.html(graph_html, height=450)
 
     with col_info:
-        st.markdown(f"##### 🎯 Chi Tiết Hồ Sơ: `{selected_app}`")
+        st.markdown(f"##### 🎯 Chi Tiết Hồ Sơ Đang Chọn: `{selected_app}`")
         if selected_app in G.nodes:
             app_info = df_apps[df_apps["app_id"] == selected_app].iloc[0]
             is_bad = (app_info["decision"] == "REJECTED")
             
             st.metric("Khách hàng", app_info["customer_name"])
             st.metric("Số CCCD/CMND", app_info["national_id"])
-            st.metric("Khoản Vay", f"{app_info['loan_amount']:,.0f} VNĐ")
+            st.metric("Khoản Vay Yêu Cầu", f"{app_info['loan_amount']:,.0f} VNĐ")
             st.metric("Điểm Rủi Ro AI", f"{app_info['risk_score']}%", 
                       delta="🚨 TỪ CHỐI (RỦI RO CAO)" if is_bad else "✅ DUYỆT (AN TOÀN)", 
                       delta_color="inverse" if is_bad else "normal")
 
-elif st.session_state.active_tab == "Đồ Thị Mạng":
-    st.markdown("##### 🕸️ Toàn Màn Hình Đồ Thị Mạng Lưới Liên Kết Gian Lận")
-    net = Network(height="600px", width="100%", bgcolor="#070c14", font_color="#f8fafc")
-    net.from_nx(G)
-    net.barnes_hut(gravity=-4000, central_gravity=0.2, spring_length=100)
-    net.save_graph("graph_full.html")
-    with open("graph_full.html", "r", encoding="utf-8") as f:
-        components.html(f.read(), height=620)
-
-elif st.session_state.active_tab == "Analytics AI":
-    st.markdown("##### 📊 Thống Kê & Dữ Liệu Hồ Sơ Chi Tiết")
+# TAB 2: NETWORK GRAPH (ĐỒ THỊ MẠNG LƯỚI TOÀN MÀN HÌNH)
+elif st.session_state.active_tab == "Network Graph":
+    st.markdown("### 🕸️ Đồ Thị Mạng Lưới Liên Kết Gian Lận (Interactive Graph)")
+    st.info("💡 **Mẹo:** Bạn có thể kéo thả các Node, cuộn chuột để Zoom in/out hoặc di chuột vào các Node để xem thuộc tính.")
     
-    m1, m2, m3, m4 = st.columns(4)
+    graph_html = render_pyvis_graph(G, highlight_node=selected_app, height="620px")
+    components.html(graph_html, height=640)
+
+# TAB 3: ANALYTICS AI (THỐNG KÊ & BẢNG DỮ LIỆU CSDL)
+elif st.session_state.active_tab == "Analytics AI":
+    st.markdown("### 📊 Analytics AI & Quản Lý Hồ Sơ CSDL")
+    
     total_apps = len(df_apps)
     rejected_apps = len(df_apps[df_apps["decision"] == "REJECTED"])
     approved_apps = len(df_apps[df_apps["decision"] == "APPROVED"])
     fraud_rate = (rejected_apps / total_apps * 100) if total_apps > 0 else 0
 
-    m1.metric("Tổng Hồ Sơ Vay", total_apps)
-    m2.metric("Hồ Sơ Đã Duyệt", approved_apps)
-    m3.metric("Hồ Sơ Từ Chối", rejected_apps)
-    m4.metric("Tỷ Lệ Gian Lận", f"{fraud_rate:.1f}%")
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Tổng Số Đơn Vay", total_apps)
+    m2.metric("Số Đơn Đã Duyệt", approved_apps)
+    m3.metric("Số Đơn Từ Chối", rejected_apps)
+    m4.metric("Tỷ Lệ Rủi Ro (Fraud Rate)", f"{fraud_rate:.1f}%")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.dataframe(df_apps, use_container_width=True, hide_index=True)
+    st.markdown("##### 🔍 Bộ Lọc & Tìm Kiếm Dữ Liệu")
+    
+    flt1, flt2, flt3 = st.columns([1.5, 1, 1])
+    search_q = flt1.text_input("🔎 Tìm theo Tên hoặc Mã đơn:", "")
+    status_q = flt2.selectbox("Trạng thái:", ["Tất cả", "APPROVED", "REJECTED"])
+    risk_q = flt3.slider("Khoảng Risk Score:", 0.0, 100.0, (0.0, 100.0))
 
-elif st.session_state.active_tab == "Bản Đồ Vị Trí":
-    st.markdown("##### 📍 Bản Đồ Phân Bố Đơn Vay Về Địa Lý (GeoIP)")
+    filtered_df = df_apps.copy()
+    if search_q:
+        filtered_df = filtered_df[filtered_df["customer_name"].str.contains(search_q, case=False) | filtered_df["app_id"].str.contains(search_q, case=False)]
+    if status_q != "Tất cả":
+        filtered_df = filtered_df[filtered_df["decision"] == status_q]
+    filtered_df = filtered_df[(filtered_df["risk_score"] >= risk_q[0]) & (filtered_df["risk_score"] <= risk_q[1])]
+
+    st.dataframe(filtered_df, use_container_width=True, hide_index=True)
+
+    csv_data = filtered_df.to_csv(index=False).encode('utf-8')
+    st.download_button("📥 Xuất Dữ Liệu Lọc (CSV)", data=csv_data, file_name="bnpl_risk_report.csv", mime="text/csv")
+
+# TAB 4: GEOIP MAP (BẢN ĐỒ PHÂN BỐ TỌA ĐỘ GIẢI NGÂN)
+elif st.session_state.active_tab == "GeoIP Map":
+    st.markdown("### 📍 Bản Đồ Phân Bố Đơn Vay & Tọa Độ GeoIP Realtime")
     
     map_df = df_apps.copy()
     map_df["color"] = map_df["decision"].apply(lambda x: [244, 63, 94, 200] if x == "REJECTED" else [16, 185, 129, 200])
+    map_df["elevation"] = map_df["risk_score"] * 50
 
     view_state = pdk.ViewState(
         latitude=map_df["latitude"].mean() if not map_df.empty else 10.7769,
@@ -477,20 +518,54 @@ elif st.session_state.active_tab == "Bản Đồ Vị Trí":
         pitch=45
     )
 
-    layer = pdk.Layer(
+    layer_scatterplot = pdk.Layer(
         "ScatterplotLayer",
         data=map_df,
         get_position=["longitude", "latitude"],
         get_fill_color="color",
-        get_radius=300,
+        get_radius=350,
         pickable=True
     )
 
-    st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "Đơn vay: {app_id}\nTên: {customer_name}\nTrạng thái: {decision}"}))
+    layer_column = pdk.Layer(
+        "ColumnLayer",
+        data=map_df,
+        get_position=["longitude", "latitude"],
+        get_elevation="elevation",
+        elevation_scale=1,
+        radius=150,
+        get_fill_color="color",
+        pickable=True,
+        extruded=True
+    )
 
-elif st.session_state.active_tab == "Rules Cấu Hình":
-    st.markdown("##### ⚙️ Cấu Hình Quy Tắc Chấm Điểm Rủi Ro (Risk Rules)")
-    st.slider("Trọng số phạt khi trùng IP bị từ chối:", 0, 100, 45)
-    st.slider("Trọng số phạt khi dùng Proxy/VPN:", 0, 100, 40)
-    st.number_input("Ngưỡng điểm Risk Score để TỪ CHỐI tự động:", value=50)
-    st.button("💾 Lưu Cấu Hình Engine")
+    st.pydeck_chart(pdk.Deck(
+        layers=[layer_scatterplot, layer_column], 
+        initial_view_state=view_state, 
+        tooltip={"text": "Mã đơn: {app_id}\nKhách hàng: {customer_name}\nĐiểm Risk: {risk_score}%\nTrạng thái: {decision}"}
+    ))
+
+# TAB 5: RULES ENGINE (CẤU HÌNH THUẬT TOÁN CHẤM ĐIỂM RỦI RO)
+elif st.session_state.active_tab == "Rules Engine":
+    st.markdown("### ⚙️ Dynamic Risk Scoring Engine Rules")
+    st.info("🛠️ Các thiết lập tại đây sẽ áp dụng trực tiếp cho các hồ sơ vay mới được tạo từ Sidebar.")
+
+    col_r1, col_r2 = st.columns(2)
+    with col_r1:
+        st.session_state.risk_threshold = st.slider(
+            "Ngưỡng Risk Score TỪ CHỐI (Reject Threshold):", 
+            min_value=10.0, max_value=90.0, value=float(st.session_state.risk_threshold), step=5.0
+        )
+        st.session_state.proxy_penalty = st.slider(
+            "Điểm phạt khi phát hiện Proxy/VPN:", 
+            min_value=0.0, max_value=50.0, value=float(st.session_state.proxy_penalty), step=5.0
+        )
+
+    with col_r2:
+        st.session_state.blacklist_penalty = st.slider(
+            "Điểm phạt khi trùng IP/Device từng bị Từ chối:", 
+            min_value=0.0, max_value=50.0, value=float(st.session_state.blacklist_penalty), step=5.0
+        )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.success(f"✅ **Cấu hình hiện tại:** Đơn vay sẽ bị TỪ CHỐI nếu Điểm Rủi Ro >= **{st.session_state.risk_threshold}%**.")
