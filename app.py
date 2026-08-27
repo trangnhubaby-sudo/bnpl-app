@@ -299,7 +299,6 @@ with st.sidebar.form("new_loan_application_form"):
     label="Môi Trường & Thiết Bị:", 
     value="Chrome/Windows", 
     placeholder="Nhập User-Agent hoặc Thiết bị..."
-        ]
     )
     
     in_vpn = st.checkbox("Phát hiện VPN/Proxy", value=("Trùng" in in_ip_option))
