@@ -31,7 +31,46 @@ if "blacklist_penalty" not in st.session_state:
     st.session_state.blacklist_penalty = 45.0
 
 st.markdown('''
-<style> /* Ép khung chứa và nút bấm rộng lấp đầy 100% diện tích cột */
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Roboto:wght@400;500;700&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Montserrat', 'Roboto', sans-serif !important;
+        background-color: #070b14 !important;
+        color: #e2e8f0 !important;
+        scroll-behavior: smooth !important; /* Hỗ trợ trượt mượt mà */
+    }
+    
+    .stApp {
+        background-color: #070b14;
+    }
+
+    header[data-testid="stHeader"] {
+        display: none !important;
+    }
+    .block-container {
+        padding: 0rem !important;
+        max-width: 100% !important;
+    }
+
+    /* TOP NAVBAR CONTAINER */
+    .top-header {
+        background: #0a101d;
+        padding: 1rem 2rem 0.5rem 2rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .brand-logo {
+        font-size: 2.4rem;
+        font-weight: 900;
+        color: #ffffff;
+        letter-spacing: 1px;
+        margin-bottom: 0.8rem;
+    }
+    .brand-logo span {
+        color: #ff9f43;
+    }
+
+    /* Ép khung chứa nút bấm rộng lấp đầy 100% diện tích cột */
     .stButton {
         width: 100% !important;
     }
@@ -53,81 +92,8 @@ st.markdown('''
         color: #ff9f43 !important;
         transform: translateY(-2px);
     }
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Roboto:wght@400;500;700&display=swap');
 
-    html, body, [class*="css"] {
-        font-family: 'Montserrat', 'Roboto', sans-serif !important;
-        background-color: #070b14 !important;
-        color: #e2e8f0 !important;
-    }
-    
-    .stApp {
-        background-color: #070b14;
-    }
-
-    header[data-testid="stHeader"] {
-        display: none !important;
-    }
-    .block-container {
-        padding: 0rem !important;
-        max-width: 100% !important;
-    }
-
-    /* 1. TOP NAVBAR CONTAINER */
-    .top-header {
-        background: #0a101d;
-        padding: 1rem 2rem 0.5rem 2rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .brand-logo {
-        font-size: 2.4rem;
-        font-weight: 900;
-        color: #ffffff;
-        letter-spacing: 1px;
-        margin-bottom: 0.8rem;
-    }
-    .brand-logo span {
-        color: #ff9f43;
-    }
-
-    /* 2. NAVIGATION MENU (ÉP 5 KHUNG TRẮNG TO ĐỀU, TRẢI DÀI KHỚP KHUNG) */
-    div[data-testid="stHorizontalBlock"] {
-        gap: 15px !important;
-        padding: 0.5rem 2rem !important;
-        align-items: center !important;
-    }
-
-    div[data-testid="column"] {
-        padding: 0px !important;
-        flex: 1 !important;
-    }
-
-    /* Ép nút bấm trắng tràn viền cột, kích thước to rộng đều đặn như yêu cầu */
-    div[data-testid="column"] > div > div > button {
-        background-color: #ffffff !important;
-        border: none !important;
-        border-radius: 12px !important;
-        color: #1a202c !important;
-        font-weight: 800 !important;
-        font-size: 1.05rem !important;
-        padding: 1.1rem 1.5rem !important;
-        width: 100% !important;
-        text-align: center !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
-        transition: all 0.2s ease-in-out !important;
-        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.15) !important;
-        white-space: nowrap !important;
-    }
-
-    div[data-testid="column"] > div > div > button:hover {
-        background-color: #f1f5f9 !important;
-        color: #ff9f43 !important;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3) !important;
-    }
-
-    /* 3. HERO BANNER */
+    /* HERO BANNER */
     .hero-full-container {
         width: 100%;
         padding: 4rem 4% 3.5rem 4%;
@@ -186,7 +152,7 @@ st.markdown('''
         box-shadow: 0 10px 25px rgba(255, 159, 67, 0.7);
     }
 
-    /* 4. FORM NHẬP HỒ SƠ */
+    /* FORM NHẬP HỒ SƠ */
     .add-form-container {
         background-color: #0f172a;
         padding: 2rem 5%;
@@ -228,7 +194,7 @@ st.markdown('''
         margin-top: 1.8rem;
     }
 
-    /* 5. CARDS & SECTIONS */
+    /* CARDS & SECTIONS */
     .section-title-box {
         text-align: center;
         padding: 2.5rem 1rem 1.5rem 1rem;
@@ -301,7 +267,7 @@ st.markdown('''
         font-size: 1.35rem;
     }
 
-    /* 6. FOOTER */
+    /* FOOTER */
     .why-section {
         background-color: #0a101d;
         color: white;
@@ -457,12 +423,11 @@ G, df_apps = fetch_data()
 # 3. SIDEBAR CONTROLS
 # ==============================================================================
 st.sidebar.title("🤖 AI Risk Platform")
-app_list = [n for n, d in G.nodes(data=True) if d.get("type") == "Application"]
+app_list = [n for n, d in G.nodes(data=True) if d.get("type"] == "Application"]
 selected_app = st.sidebar.selectbox("📋 Chọn Hồ Sơ Xem Chi Tiết:", app_list if app_list else ["N/A"])
 
 # ==============================================================================
-# ==============================================================================
-# 4. TOP NAVBAR HEADER & NAVIGATION (DÙNG HTML ĐỂ CỐ ĐỊNH KHUNG TO ĐỀU TUYỆT ĐỐI)
+# 4. TOP NAVBAR HEADER & 5 NÚT MENU (GẮN JAVASCRIPT TỰ ĐỘNG TRƯỢT XUỐNG)
 # ==============================================================================
 st.markdown('''
 <div class="top-header">
@@ -470,43 +435,52 @@ st.markdown('''
 </div>
 ''', unsafe_allow_html=True)
 
-# Tạo khung chứa menu dạng lưới 5 cột bằng HTML/CSS thuần để các khung trắng to rộng đều đặn
-col1, col2, col3, col4, col5 = st.columns(5)
+cols = st.columns(5)
 
-with col1:
-    st.markdown('<div class="nav-btn-wrapper">', unsafe_allow_html=True)
+with cols[0]:
     if st.button("TRANG CHỦ", key="btn_home", use_container_width=True):
         st.session_state.active_tab = "Overview"
         st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
 
-with col2:
-    st.markdown('<div class="nav-btn-wrapper">', unsafe_allow_html=True)
+with cols[1]:
     if st.button("MÔ HÌNH AI", key="btn_rules", use_container_width=True):
         st.session_state.active_tab = "Rules Engine"
         st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
 
-with col3:
-    st.markdown('<div class="nav-btn-wrapper">', unsafe_allow_html=True)
+with cols[2]:
     if st.button("ĐỒ THỊ NETWORK", key="btn_graph", use_container_width=True):
         st.session_state.active_tab = "Network Graph"
         st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
 
-with col4:
-    st.markdown('<div class="nav-btn-wrapper">', unsafe_allow_html=True)
+with cols[3]:
     if st.button("BẢN ĐỒ GEOIP", key="btn_geoip", use_container_width=True):
         st.session_state.active_tab = "GeoIP Map"
         st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
 
-with col5:
-    st.markdown('<div class="nav-btn-wrapper">', unsafe_allow_html=True)
+with cols[4]:
     if st.button("ANALYTICS & BÁO CÁO", key="btn_analytics", use_container_width=True):
         st.session_state.active_tab = "Analytics AI"
         st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+
+# Đoạn mã JavaScript tự động cuộn màn hình mượt mà xuống đúng mục tương ứng dựa theo tab đang chọn
+current_target_id = {
+    "Overview": "section-overview",
+    "Rules Engine": "section-rules",
+    "Network Graph": "section-graph",
+    "GeoIP Map": "section-geoip",
+    "Analytics AI": "section-analytics"
+}.get(st.session_state.active_tab, "section-overview")
+
+components.html(f"""
+<script>
+    setTimeout(function() {{
+        const target = window.parent.document.getElementById("{current_target_id}");
+        if (target) {{
+            target.scrollIntoView({{ behavior: 'smooth' }});
+        }}
+    }}, 100);
+</script>
+""", height=0)
 
 # ==============================================================================
 # 5. HERO BANNER
@@ -568,9 +542,10 @@ with st.form("add_loan_inline_form_inputs", clear_on_submit=False):
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 7. SECTION ROUTER
+# 7. SECTION ROUTER (CÓ GẮN ID ĐỂ TRƯỢT ĐẾN)
 # ==============================================================================
 if st.session_state.active_tab == "Overview":
+    st.markdown('<div id="section-overview"></div>', unsafe_allow_html=True)
     st.markdown('''
     <div class="section-title-box">
         <div class="section-main-title">HỒ SƠ AI PHÂN TÍCH NỔI BẬT</div>
@@ -639,6 +614,7 @@ if st.session_state.active_tab == "Overview":
                       delta_color="inverse" if is_bad else "normal")
 
 elif st.session_state.active_tab == "Network Graph":
+    st.markdown('<div id="section-graph"></div>', unsafe_allow_html=True)
     st.markdown('''
     <div class="section-title-box">
         <div class="section-main-title">ĐỒ THỊ MẠNG LƯỚI INTERACTIVE</div>
@@ -650,6 +626,7 @@ elif st.session_state.active_tab == "Network Graph":
     components.html(graph_html, height=620)
 
 elif st.session_state.active_tab == "Analytics AI":
+    st.markdown('<div id="section-analytics"></div>', unsafe_allow_html=True)
     st.markdown('''
     <div class="section-title-box">
         <div class="section-main-title">ANALYTICS AI & QUẢN LÝ DỮ LIỆU</div>
@@ -689,6 +666,7 @@ elif st.session_state.active_tab == "Analytics AI":
     st.download_button("📥 Xuất Báo Cáo Dữ Liệu AI (CSV)", data=csv_data, file_name="nexus_ai_risk_report.csv", mime="text/csv")
 
 elif st.session_state.active_tab == "GeoIP Map":
+    st.markdown('<div id="section-geoip"></div>', unsafe_allow_html=True)
     st.markdown('''
     <div class="section-title-box">
         <div class="section-main-title">BẢN ĐỒ VỊ TRÍ REALTIME GEOIP</div>
@@ -726,6 +704,7 @@ elif st.session_state.active_tab == "GeoIP Map":
     ))
 
 elif st.session_state.active_tab == "Rules Engine":
+    st.markdown('<div id="section-rules"></div>', unsafe_allow_html=True)
     st.markdown('''
     <div class="section-title-box">
         <div class="section-main-title">MÔ HÌNH & RULES CẤU HÌNH AI ENGINE</div>
