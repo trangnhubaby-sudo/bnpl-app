@@ -461,7 +461,7 @@ st.markdown('''
     <div class="hero-sub-header">AI RISK ANALYTICS PLATFORM</div>
     <div class="hero-main-title">
         HỆ THỐNG AI PHÂN TÍCH<br>
-        RỦI RO TÍN DỤNG HIỆU QUẢ NHẤT
+        RỦI RO TÍN DỤNG THÔNG MINH
     </div>
     <div>
         <a href="#add_loan_inline_form" style="text-decoration: none;">
