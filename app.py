@@ -10,8 +10,9 @@ import streamlit.components.v1 as components
 import folium
 from streamlit_folium import st_folium
 from streamlit_autorefresh import st_autorefresh
+from streamlit_javascript import st_javascript
 
-# 1. CẤU HÌNH TRANG & CSS giao diện ENTERPRISE
+# 1. CẤU HÌNH TRANG & CSS GIAO DIỆN ENTERPRISE
 st.set_page_config(
     page_title="NEXUS Anti-Fraud Radar | BNPL Risk Decisioning System",
     page_icon="🛡️",
@@ -255,7 +256,7 @@ st.markdown('''
 </div>
 ''', unsafe_allow_html=True)
 
-# 6. SIDEBAR - NHẬP LIỆU THẨM ĐỊNH (ĐÃ SỬA DẠNG TỰ ĐIỀN NGUYÊN BẢN)
+# 6. SIDEBAR - NHẬP LIỆU THẨM ĐỊNH (TỰ ĐỘNG BẮT IP THẬT)
 st.sidebar.markdown("### 🎛️ BẢNG ĐIỀU HÀNH THẨM ĐỊNH")
 
 app_list = [n for n, d in G.nodes(data=True) if d.get("type") == "Application"]
@@ -264,26 +265,11 @@ selected_app = st.sidebar.selectbox("📋 Chọn Hồ Sơ Cần Kiểm Tra:", ap
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📥 TIẾP NHẬN HỒ SƠ VAY REAL-TIME")
 
-with st.sidebar.form("new_loan_application_form"):
-    st.markdown("<small style='color:#64748b;'>Tự động thu thập Device Fingerprint & GeoIP</small>", unsafe_allow_html=True)
-    
-    in_name = st.text_input("Họ và Tên Khách Hàng:", value="Hoàng Trọng Kiên")
-    in_cccd = st.text_input("Số CCCD/CMND:", value="012095006789")
-    in_amount = st.number_input("Khoản Vay Yêu Cầu (VNĐ):", value=20000000, step=1000000)
-    
-    # 🌟 ĐÔI THÀNH DẠNG TỰ ĐIỀN NGUYÊN BẢN (Text Input)
-# --- ĐOẠN CODE MỚI: TỰ ĐỘNG LẤY IP THỰC TẾ CỦA NGƯỜI TRUY CẬP WEB ---
-from streamlit_javascript import st_javascript
-
-# Tự động gọi API lấy IP thực của thiết bị đang mở web
+# --- LẤY IP THỰC TẾ NGUYÊN BẢN CỦA NGƯỜI MỞ WEB ---
 user_real_ip = st_javascript("await fetch('https://api.ipify.org').then(r => r.text())")
-
-# Nếu chưa lấy xong IP (hoặc bị chặn), mặc định dùng IP mẫu
 if not user_real_ip:
     user_real_ip = "104.28.19.14"
-# ---------------------------------------------------------------------
 
-# Form nhập liệu hiện tại của bạn:
 with st.sidebar.form("new_loan_application_form"):
     st.markdown("<small style='color:#64748b;'>Tự động thu thập Device Fingerprint & GeoIP</small>", unsafe_allow_html=True)
     
@@ -291,7 +277,7 @@ with st.sidebar.form("new_loan_application_form"):
     in_cccd = st.text_input("Số CCCD/CMND:", value="012095006789")
     in_amount = st.number_input("Khoản Vay Yêu Cầu (VNĐ):", value=20000000, step=1000000)
     
-    # 🌟 CẬP NHẬT: Gán `value=str(user_real_ip)` để ô IP tự nhảy IP thật của người dùng
+    # Ô IP tự động cập nhật IP thật nhưng vẫn cho phép sửa tự do
     in_ip_address = st.text_input(
         "IP Khách Hàng Truy Cập:", 
         value=str(user_real_ip),
@@ -507,4 +493,3 @@ with tab_map:
 with tab_database:
     st.markdown("##### 📋 CSDL Tín Dụng Đồng Bộ Trong Hệ Thống")
     st.dataframe(df_apps, use_container_width=True, hide_index=True)
-    
