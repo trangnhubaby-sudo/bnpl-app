@@ -53,7 +53,7 @@ st.markdown('''
         max-width: 100% !important;
     }
 
-    /* TOP NAVBAR CONTAINER & BRAND */
+    /* 1. TOP NAVBAR CONTAINER */
     .top-header {
         background: #0a101d;
         padding: 1rem 2rem 0.5rem 2rem;
@@ -70,100 +70,116 @@ st.markdown('''
         color: #ff9f43;
     }
 
-    /* NAVIGATION MENU BUTTONS (CHỮ TO FULL KHUNG) */
+    /* 2. NAVIGATION MENU (KHUNG TRẮNG TO BẰNG KHUNG CAM) */
     div[data-testid="stHorizontalBlock"] {
-        gap: 6px !important;
+        gap: 8px !important;
         padding: 0 1rem !important;
+        align-items: center !important;
     }
 
     div[data-testid="column"] {
         padding: 0px !important;
-        flex: 1 1 0 !important;
     }
 
     div[data-testid="column"] > div > div > button {
-        background-color: #111a2e !important;
-        border: 2px solid #23324d !important;
-        border-radius: 8px !important;
-        color: #ffffff !important;
-        font-weight: 900 !important;
-        font-size: 1.35rem !important;
-        padding: 1rem 0.2rem !important;
+        background-color: #ffffff !important;
+        border: none !important;
+        border-radius: 10px !important;
+        color: #1a202c !important;
+        font-weight: 800 !important;
+        font-size: 1.15rem !important;
+        padding: 0.9rem 0.5rem !important;
         width: 100% !important;
         text-align: center !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
+        letter-spacing: 0.3px !important;
         transition: all 0.2s ease-in-out !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15) !important;
+        white-space: nowrap !important;
     }
 
     div[data-testid="column"] > div > div > button:hover {
-        background-color: #1c2b47 !important;
-        border-color: #ff9f43 !important;
+        background-color: #f1f5f9 !important;
         color: #ff9f43 !important;
-        box-shadow: 0 0 15px rgba(255, 159, 67, 0.4) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(255, 255, 255, 0.25) !important;
     }
 
     .phone-btn-full {
         background: linear-gradient(135deg, #ff9f43 0%, #ff8c00 100%);
         color: #000000 !important;
         font-weight: 900 !important;
-        font-size: 1.4rem !important;
-        padding: 1rem 0.2rem;
-        border-radius: 8px;
+        font-size: 1.25rem !important;
+        padding: 0.9rem 0.5rem;
+        border-radius: 10px;
         text-align: center;
-        box-shadow: 0 4px 15px rgba(255, 159, 67, 0.5);
+        box-shadow: 0 4px 15px rgba(255, 159, 67, 0.4);
         display: block;
         width: 100%;
         letter-spacing: 0.5px;
+        white-space: nowrap;
     }
 
-    /* HERO BANNER */
-    .hero-container {
+    /* 3. HERO BANNER CHỮ TO CỰC ĐẠI FULL KHUNG */
+    .hero-full-container {
         width: 100%;
-        padding: 3.5rem 6% 2.5rem 6%;
+        padding: 4rem 4% 3.5rem 4%;
         background: linear-gradient(135deg, #070b14 0%, #0d1527 50%, #101a30 100%);
-        position: relative;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
+        border-bottom: 2px solid rgba(255, 159, 67, 0.2);
+        box-shadow: inset 0 -10px 30px rgba(0,0,0,0.5);
     }
-    .orange-line {
-        width: 70px;
-        height: 6px;
+
+    .orange-accent-line {
+        width: 120px;
+        height: 8px;
         background-color: #ff9f43;
-        border-radius: 3px;
-        margin-bottom: 1.2rem;
+        border-radius: 4px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0 12px rgba(255, 159, 67, 0.6);
     }
-    .hero-subtitle {
+
+    .hero-sub-header {
         color: #94a3b8;
-        font-size: 1.3rem;
-        font-weight: 700;
-        letter-spacing: 2px;
+        font-size: 1.8rem;
+        font-weight: 800;
+        letter-spacing: 3px;
         text-transform: uppercase;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.8rem;
     }
-    .hero-title {
-        font-size: 3.2rem;
+
+    .hero-main-title {
+        font-size: 4.5rem;
         font-weight: 900;
         color: #ffffff;
-        line-height: 1.2;
-        margin-bottom: 1.5rem;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+        margin-bottom: 2.2rem;
+        word-break: break-word;
     }
-    .orange-btn {
-        background-color: #ff9f43;
-        color: #000000;
-        font-weight: 800;
-        font-size: 1.1rem;
-        padding: 0.8rem 2.2rem;
-        border-radius: 6px;
+
+    .hero-action-btn {
+        background: linear-gradient(135deg, #ff9f43 0%, #ff8c00 100%);
+        color: #000000 !important;
+        font-weight: 900 !important;
+        font-size: 1.5rem !important;
+        padding: 1.2rem 3.5rem !important;
+        border-radius: 10px;
         border: none;
         cursor: pointer;
         display: inline-block;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        box-shadow: 0 4px 15px rgba(255, 159, 67, 0.3);
+        letter-spacing: 1px;
+        box-shadow: 0 6px 20px rgba(255, 159, 67, 0.5);
+        transition: all 0.3s ease;
     }
 
-    /* ADD HỒ SƠ VAY MỚI FORM CONTAINER */
+    .hero-action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(255, 159, 67, 0.7);
+    }
+
+    /* 4. FORM NHẬP HỒ SƠ VAY MỚI INLINE */
     .add-form-container {
         background-color: #0f172a;
         padding: 2rem 5%;
@@ -205,7 +221,7 @@ st.markdown('''
         margin-top: 1.8rem;
     }
 
-    /* SECTIONS & CARDS */
+    /* 5. CARDS & SECTIONS */
     .section-title-box {
         text-align: center;
         padding: 2.5rem 1rem 1.5rem 1rem;
@@ -278,7 +294,7 @@ st.markdown('''
         font-size: 1.35rem;
     }
 
-    /* FOOTER */
+    /* 6. FOOTER */
     .why-section {
         background-color: #0a101d;
         color: white;
@@ -322,7 +338,7 @@ st.markdown('''
 ''', unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. CSDL SQLITE & GRAPH ENGINE
+# 2. DATABASE & GRAPH ENGINE
 # ==============================================================================
 def init_db():
     conn = sqlite3.connect("bnpl_enterprise.db")
@@ -438,7 +454,7 @@ app_list = [n for n, d in G.nodes(data=True) if d.get("type") == "Application"]
 selected_app = st.sidebar.selectbox("📋 Chọn Hồ Sơ Xem Chi Tiết:", app_list if app_list else ["N/A"])
 
 # ==============================================================================
-# 4. TOP NAVBAR HEADER (MENU NÚT TO FULL KHUNG)
+# 4. TOP NAVBAR HEADER
 # ==============================================================================
 st.markdown('''
 <div class="top-header">
@@ -446,7 +462,7 @@ st.markdown('''
 </div>
 ''', unsafe_allow_html=True)
 
-n_col1, n_col2, n_col3, n_col4, n_col5, n_col6 = st.columns([1, 1, 1.2, 1, 1.3, 1])
+n_col1, n_col2, n_col3, n_col4, n_col5, n_col6 = st.columns([1.2, 1.3, 1.7, 1.4, 2.0, 1.6])
 
 with n_col1:
     if st.button("TRANG CHỦ", key="btn_home"):
@@ -480,23 +496,28 @@ with n_col6:
 # 5. HERO BANNER
 # ==============================================================================
 st.markdown('''
-<div class="hero-container">
-    <div class="orange-line"></div>
-    <div class="hero-subtitle">AI RISK ANALYTICS PLATFORM</div>
-    <div class="hero-title">HỆ THỐNG AI PHÂN TÍCH<br>RỦI RO TÍN DỤNG HIỆU QUẢ NHẤT</div>
-    <div style="margin-top: 1.8rem;">
-        <span class="orange-btn">XEM NGAY</span>
+<div class="hero-full-container">
+    <div class="orange-accent-line"></div>
+    <div class="hero-sub-header">AI RISK ANALYTICS PLATFORM</div>
+    <div class="hero-main-title">
+        HỆ THỐNG AI PHÂN TÍCH<br>
+        RỦI RO TÍN DỤNG HIỆU QUẢ NHẤT
+    </div>
+    <div>
+        <a href="#add_loan_inline_form" style="text-decoration: none;">
+            <span class="hero-action-btn">XEM NGAY</span>
+        </a>
     </div>
 </div>
 ''', unsafe_allow_html=True)
 
 # ==============================================================================
-# 6. INLINE FORM: THÊM HỒ SƠ VAY MỚI TRỰC TIẾP
+# 6. INLINE FORM: NHẬP HỒ SƠ VAY MỚI TRỰC TIẾP
 # ==============================================================================
-st.markdown('<div class="add-form-container">', unsafe_allow_html=True)
+st.markdown('<div class="add-form-container" id="add_loan_inline_form">', unsafe_allow_html=True)
 st.markdown('<div class="form-header-title">➕ NHẬP HỒ SƠ VAY MỚI ĐỂ AI ĐÁNH GIÁ RỦI RO</div>', unsafe_allow_html=True)
 
-with st.form("add_loan_inline_form", clear_on_submit=False):
+with st.form("add_loan_inline_form_inputs", clear_on_submit=False):
     f_col1, f_col2, f_col3, f_col4, f_col5 = st.columns([1.5, 1.3, 1.4, 1.2, 1.3])
 
     with f_col1:
