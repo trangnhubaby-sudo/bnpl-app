@@ -1,7 +1,11 @@
 streamlit
+fastapi
+uvicorn
+pydantic
 networkx
-numpy
 pandas
+numpy
 pyvis
 folium
 streamlit-folium
+streamlit-autorefresh
