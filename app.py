@@ -21,7 +21,6 @@ st.set_page_config(
 
 st_autorefresh(interval=15000, key="nexus_ai_sync")
 
-# Session State Initialization
 if "active_tab" not in st.session_state:
     st.session_state.active_tab = "Overview"
 if "risk_threshold" not in st.session_state:
@@ -70,32 +69,33 @@ st.markdown('''
         color: #ff9f43;
     }
 
-    /* 2. NAVIGATION MENU (TẤT CẢ CÁC KHUNG TRẮNG TO BẰNG KHUNG CAM) */
+    /* 2. NAVIGATION MENU (ÉP TẤT CẢ CÁC KHUNG TRẮNG TO ĐỀU VÀ TRẢI DÀI) */
     div[data-testid="stHorizontalBlock"] {
-        gap: 10px !important;
-        padding: 0 1.5rem !important;
+        gap: 15px !important;
+        padding: 0.5rem 2rem !important;
         align-items: center !important;
     }
 
     div[data-testid="column"] {
         padding: 0px !important;
+        flex: 1 !important;
     }
 
-    /* Đồng bộ kích thước nút trắng và nút cam qua từng cột chia đều */
+    /* Ép nút bấm tràn viền cột, kích thước to và đều đặn tuyệt đối */
     div[data-testid="column"] > div > div > button {
         background-color: #ffffff !important;
         border: none !important;
-        border-radius: 10px !important;
+        border-radius: 12px !important;
         color: #1a202c !important;
         font-weight: 800 !important;
-        font-size: 1.05rem !important;
-        padding: 0.9rem 0.2rem !important;
+        font-size: 1.1rem !important;
+        padding: 1rem 0.5rem !important;
         width: 100% !important;
         text-align: center !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.2px !important;
+        letter-spacing: 0.5px !important;
         transition: all 0.2s ease-in-out !important;
-        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15) !important;
+        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.15) !important;
         white-space: nowrap !important;
     }
 
@@ -103,25 +103,10 @@ st.markdown('''
         background-color: #f1f5f9 !important;
         color: #ff9f43 !important;
         transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(255, 255, 255, 0.25) !important;
+        box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3) !important;
     }
 
-    .phone-btn-full {
-        background: linear-gradient(135deg, #ff9f43 0%, #ff8c00 100%);
-        color: #000000 !important;
-        font-weight: 900 !important;
-        font-size: 1.1rem !important;
-        padding: 0.9rem 0.2rem;
-        border-radius: 10px;
-        text-align: center;
-        box-shadow: 0 4px 15px rgba(255, 159, 67, 0.4);
-        display: block;
-        width: 100%;
-        letter-spacing: 0.2px;
-        white-space: nowrap;
-    }
-
-    /* 3. HERO BANNER CHỮ TO CỰC ĐẠI FULL KHUNG */
+    /* 3. HERO BANNER */
     .hero-full-container {
         width: 100%;
         padding: 4rem 4% 3.5rem 4%;
@@ -180,7 +165,7 @@ st.markdown('''
         box-shadow: 0 10px 25px rgba(255, 159, 67, 0.7);
     }
 
-    /* 4. FORM NHẬP HỒ SƠ VAY MỚI INLINE */
+    /* 4. FORM NHẬP HỒ SƠ */
     .add-form-container {
         background-color: #0f172a;
         padding: 2rem 5%;
@@ -455,7 +440,7 @@ app_list = [n for n, d in G.nodes(data=True) if d.get("type") == "Application"]
 selected_app = st.sidebar.selectbox("📋 Chọn Hồ Sơ Xem Chi Tiết:", app_list if app_list else ["N/A"])
 
 # ==============================================================================
-# 4. TOP NAVBAR HEADER
+# 4. TOP NAVBAR HEADER (CHIA 5 CỘT ĐỀU NHAU, BỎ SĐT)
 # ==============================================================================
 st.markdown('''
 <div class="top-header">
@@ -463,37 +448,33 @@ st.markdown('''
 </div>
 ''', unsafe_allow_html=True)
 
-# Chia 6 cột đều nhau tuyệt đối để tất cả các khung (trắng và cam) có kích thước bằng nhau
-cols = st.columns(6)
-n_col1, n_col2, n_col3, n_col4, n_col5, n_col6 = cols[0], cols[1], cols[2], cols[3], cols[4], cols[5]
+# Chia chính xác 5 cột đều nhau tuyệt đối cho 5 nút menu
+cols = st.columns(5)
 
-with n_col1:
+with cols[0]:
     if st.button("TRANG CHỦ", key="btn_home"):
         st.session_state.active_tab = "Overview"
         st.rerun()
 
-with n_col2:
+with cols[1]:
     if st.button("MÔ HÌNH AI", key="btn_rules"):
         st.session_state.active_tab = "Rules Engine"
         st.rerun()
 
-with n_col3:
+with cols[2]:
     if st.button("ĐỒ THỊ NETWORK", key="btn_graph"):
         st.session_state.active_tab = "Network Graph"
         st.rerun()
 
-with n_col4:
+with cols[3]:
     if st.button("BẢN ĐỒ GEOIP", key="btn_geoip"):
         st.session_state.active_tab = "GeoIP Map"
         st.rerun()
 
-with n_col5:
+with cols[4]:
     if st.button("ANALYTICS & BÁO CÁO", key="btn_analytics"):
         st.session_state.active_tab = "Analytics AI"
         st.rerun()
-
-with n_col6:
-    st.markdown('<div class="phone-btn-full">0969.699.499</div>', unsafe_allow_html=True)
 
 # ==============================================================================
 # 5. HERO BANNER
