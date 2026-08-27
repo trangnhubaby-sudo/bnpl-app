@@ -10,7 +10,7 @@ import streamlit.components.v1 as components
 from streamlit_autorefresh import st_autorefresh
 
 # ==============================================================================
-# 1. PAGE CONFIG & DARK SPACE THEME CSS (MATCHING SAMPLE IMAGE)
+# 1. PAGE CONFIG & DARK SPACE THEME CSS
 # ==============================================================================
 st.set_page_config(
     page_title="NEXUS AI - Hệ Thống Phân Tích Rủi Ro Tín Dụng",
@@ -21,7 +21,7 @@ st.set_page_config(
 
 st_autorefresh(interval=15000, key="nexus_ai_sync")
 
-# Session State
+# Session State Initialization
 if "active_tab" not in st.session_state:
     st.session_state.active_tab = "Overview"
 if "risk_threshold" not in st.session_state:
@@ -31,7 +31,6 @@ if "proxy_penalty" not in st.session_state:
 if "blacklist_penalty" not in st.session_state:
     st.session_state.blacklist_penalty = 45.0
 
-# CSS Dark Theme Chuẩn Mẫu (Font chữ to, rõ ràng, màu xanh đen & cam)
 st.markdown('''
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Roboto:wght@400;500;700&display=swap');
@@ -54,44 +53,75 @@ st.markdown('''
         max-width: 100% !important;
     }
 
-    /* 1. TOP NAVBAR HEADER */
+    /* TOP NAVBAR CONTAINER & BRAND */
     .top-header {
         background: #0a101d;
-        padding: 1.2rem 5%;
+        padding: 1rem 2rem 0.5rem 2rem;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
     }
     .brand-logo {
-        font-size: 2.2rem;
+        font-size: 2.4rem;
         font-weight: 900;
         color: #ffffff;
         letter-spacing: 1px;
+        margin-bottom: 0.8rem;
     }
     .brand-logo span {
         color: #ff9f43;
     }
 
-    /* Styling nút bấm Menu Navigation (Font to hơn) */
-    div[data-testid="stColumn"] > div > div > button {
-        background-color: transparent !important;
-        border: none !important;
-        color: #cbd5e1 !important;
-        font-weight: 700 !important;
-        font-size: 1.05rem !important;
-        padding: 0.6rem 0.5rem !important;
-        transition: all 0.3s ease;
-    }
-    div[data-testid="stColumn"] > div > div > button:hover {
-        color: #ff9f43 !important;
+    /* NAVIGATION MENU BUTTONS (CHỮ TO FULL KHUNG) */
+    div[data-testid="stHorizontalBlock"] {
+        gap: 6px !important;
+        padding: 0 1rem !important;
     }
 
-    /* 2. HERO BANNER STYLE KHÔNG GIAN SÂU */
+    div[data-testid="column"] {
+        padding: 0px !important;
+        flex: 1 1 0 !important;
+    }
+
+    div[data-testid="column"] > div > div > button {
+        background-color: #111a2e !important;
+        border: 2px solid #23324d !important;
+        border-radius: 8px !important;
+        color: #ffffff !important;
+        font-weight: 900 !important;
+        font-size: 1.35rem !important;
+        padding: 1rem 0.2rem !important;
+        width: 100% !important;
+        text-align: center !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        transition: all 0.2s ease-in-out !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    div[data-testid="column"] > div > div > button:hover {
+        background-color: #1c2b47 !important;
+        border-color: #ff9f43 !important;
+        color: #ff9f43 !important;
+        box-shadow: 0 0 15px rgba(255, 159, 67, 0.4) !important;
+    }
+
+    .phone-btn-full {
+        background: linear-gradient(135deg, #ff9f43 0%, #ff8c00 100%);
+        color: #000000 !important;
+        font-weight: 900 !important;
+        font-size: 1.4rem !important;
+        padding: 1rem 0.2rem;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(255, 159, 67, 0.5);
+        display: block;
+        width: 100%;
+        letter-spacing: 0.5px;
+    }
+
+    /* HERO BANNER */
     .hero-container {
         width: 100%;
-        padding: 4rem 8% 3rem 8%;
+        padding: 3.5rem 6% 2.5rem 6%;
         background: linear-gradient(135deg, #070b14 0%, #0d1527 50%, #101a30 100%);
         position: relative;
         border-bottom: 1px solid rgba(255,255,255,0.05);
@@ -118,8 +148,6 @@ st.markdown('''
         line-height: 1.2;
         margin-bottom: 1.5rem;
     }
-
-    /* Nút Cam chuẩn mẫu */
     .orange-btn {
         background-color: #ff9f43;
         color: #000000;
@@ -135,18 +163,52 @@ st.markdown('''
         box-shadow: 0 4px 15px rgba(255, 159, 67, 0.3);
     }
 
-    /* 3. SEARCH BAR BAR LỌC NHANH */
-    .search-section {
+    /* ADD HỒ SƠ VAY MỚI FORM CONTAINER */
+    .add-form-container {
         background-color: #0f172a;
-        padding: 1.8rem 8%;
-        border-top: 1px solid rgba(255,255,255,0.05);
-        border-bottom: 1px solid rgba(255,255,255,0.05);
+        padding: 2rem 5%;
+        border-top: 2px solid #1e293b;
+        border-bottom: 2px solid #1e293b;
+        margin-bottom: 2rem;
+    }
+    .form-header-title {
+        color: #ff9f43;
+        font-size: 1.5rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        margin-bottom: 1.2rem;
+        letter-spacing: 0.5px;
+    }
+    .stTextInput label, .stNumberInput label, .stCheckbox label p {
+        color: #e2e8f0 !important;
+        font-weight: 800 !important;
+        font-size: 1.1rem !important;
+    }
+    .stTextInput input, .stNumberInput input {
+        background-color: #1a2332 !important;
+        color: #ffffff !important;
+        border: 1px solid #334155 !important;
+        border-radius: 6px !important;
+        font-size: 1.1rem !important;
+        padding: 0.6rem 0.8rem !important;
+    }
+    div[data-testid="stForm"] button {
+        background: linear-gradient(135deg, #ff9f43 0%, #ff8c00 100%) !important;
+        color: #000000 !important;
+        font-weight: 900 !important;
+        font-size: 1.25rem !important;
+        padding: 0.8rem 1rem !important;
+        border-radius: 6px !important;
+        border: none !important;
+        text-transform: uppercase !important;
+        box-shadow: 0 4px 15px rgba(255, 159, 67, 0.4) !important;
+        margin-top: 1.8rem;
     }
 
-    /* 4. SECTION HEADER */
+    /* SECTIONS & CARDS */
     .section-title-box {
         text-align: center;
-        padding: 3rem 1rem 1.5rem 1rem;
+        padding: 2.5rem 1rem 1.5rem 1rem;
     }
     .section-main-title {
         font-size: 2.3rem;
@@ -160,8 +222,6 @@ st.markdown('''
         font-size: 1.1rem;
         margin-top: 0.5rem;
     }
-
-    /* 5. AI CARDS (DARK MODE ENHANCED) */
     .bds-card {
         background: #0f172a;
         border-radius: 12px;
@@ -218,7 +278,7 @@ st.markdown('''
         font-size: 1.35rem;
     }
 
-    /* 6. FOOTER SECTION */
+    /* FOOTER */
     .why-section {
         background-color: #0a101d;
         color: white;
@@ -254,21 +314,15 @@ st.markdown('''
         line-height: 1.6;
     }
 
-    /* Sidebar Customization */
     section[data-testid="stSidebar"] {
         background-color: #0a101d !important;
         border-right: 1px solid #1e293b;
-    }
-    
-    /* Input Styling Dark */
-    .stTextInput input, .stSelectbox select, .stNumberInput input {
-        font-size: 1.05rem !important;
     }
 </style>
 ''', unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. CSDL SQLITE & GRAPH ENGINE (NỘI DUNG NGUYÊN BẢN)
+# 2. CSDL SQLITE & GRAPH ENGINE
 # ==============================================================================
 def init_db():
     conn = sqlite3.connect("bnpl_enterprise.db")
@@ -377,38 +431,14 @@ init_db()
 G, df_apps = fetch_data()
 
 # ==============================================================================
-# 3. SIDEBAR: TẠO HỒ SƠ VAY MỚI (NỘI DUNG NGUYÊN BẢN)
+# 3. SIDEBAR CONTROLS
 # ==============================================================================
 st.sidebar.title("🤖 AI Risk Platform")
-
-with st.sidebar.expander("➕ **NHẬP HỒ SƠ VAY MỚI**", expanded=True):
-    with st.form("add_loan_form", clear_on_submit=True):
-        new_name = st.text_input("Họ và Tên", "Trần Văn Mới")
-        new_nid = st.text_input("Số CCCD", "038099005566")
-        new_amount = st.number_input("Số tiền vay (VNĐ)", min_value=1000000, value=20000000, step=1000000)
-        new_ip = st.text_input("Địa chỉ IP", "27.67.42.19")
-        new_fp = st.text_input("Fingerprint Thiết bị", "FP-CC44B109")
-        c_lat, c_lng = st.columns(2)
-        with c_lat:
-            new_lat = st.number_input("Vĩ độ", value=10.7769, format="%.4f")
-        with c_lng:
-            new_lng = st.number_input("Kinh độ", value=106.7009, format="%.4f")
-        new_proxy = st.checkbox("Sử dụng Proxy/VPN nghi vấn?")
-        
-        submit_btn = st.form_submit_button("🚀 Gửi Đơn Vay & AI Evaluation", use_container_width=True)
-        if submit_btn:
-            app_id, risk, decision = add_new_application(new_name, new_nid, new_amount, new_ip, new_fp, new_lat, new_lng, new_proxy)
-            if decision == "APPROVED":
-                st.sidebar.success(f"✅ Đã duyệt đơn {app_id}! Risk: {risk}%")
-            else:
-                st.sidebar.error(f"🚨 Từ chối đơn {app_id}! Risk: {risk}%")
-            st.rerun()
-
 app_list = [n for n, d in G.nodes(data=True) if d.get("type") == "Application"]
 selected_app = st.sidebar.selectbox("📋 Chọn Hồ Sơ Xem Chi Tiết:", app_list if app_list else ["N/A"])
 
 # ==============================================================================
-# 4. TOP NAVBAR HEADER (CÓ SỐ ĐIỆN THOẠI / NÚT CAM GIỐNG ẢNH MẪU)
+# 4. TOP NAVBAR HEADER (MENU NÚT TO FULL KHUNG)
 # ==============================================================================
 st.markdown('''
 <div class="top-header">
@@ -416,23 +446,38 @@ st.markdown('''
 </div>
 ''', unsafe_allow_html=True)
 
-nav_col1, nav_col2, nav_col3, nav_col4, nav_col5, nav_col6 = st.columns([1.2, 1.2, 1.3, 1.2, 1.4, 1.3])
+n_col1, n_col2, n_col3, n_col4, n_col5, n_col6 = st.columns([1, 1, 1.2, 1, 1.3, 1])
 
-with nav_col1: 
-    if st.button("TRANG CHỦ", key="nb1"): st.session_state.active_tab = "Overview"
-with nav_col2: 
-    if st.button("MÔ HÌNH AI", key="nb2"): st.session_state.active_tab = "Rules Engine"
-with nav_col3: 
-    if st.button("ĐỒ THỊ NETWORK", key="nb3"): st.session_state.active_tab = "Network Graph"
-with nav_col4: 
-    if st.button("BẢN ĐỒ GEOIP", key="nb4"): st.session_state.active_tab = "GeoIP Map"
-with nav_col5: 
-    if st.button("ANALYTICS & BÁO CÁO", key="nb5"): st.session_state.active_tab = "Analytics AI"
-with nav_col6:
-    st.markdown('<button class="orange-btn" style="padding: 0.4rem 1rem; font-size: 0.95rem;">0969.699.499</button>', unsafe_allow_html=True)
+with n_col1:
+    if st.button("TRANG CHỦ", key="btn_home"):
+        st.session_state.active_tab = "Overview"
+        st.rerun()
+
+with n_col2:
+    if st.button("MÔ HÌNH AI", key="btn_rules"):
+        st.session_state.active_tab = "Rules Engine"
+        st.rerun()
+
+with n_col3:
+    if st.button("ĐỒ THỊ NETWORK", key="btn_graph"):
+        st.session_state.active_tab = "Network Graph"
+        st.rerun()
+
+with n_col4:
+    if st.button("BẢN ĐỒ GEOIP", key="btn_geoip"):
+        st.session_state.active_tab = "GeoIP Map"
+        st.rerun()
+
+with n_col5:
+    if st.button("ANALYTICS & BÁO CÁO", key="btn_analytics"):
+        st.session_state.active_tab = "Analytics AI"
+        st.rerun()
+
+with n_col6:
+    st.markdown('<div class="phone-btn-full">0969.699.499</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 5. HERO BANNER CHUẨN MẪU (ORANGE ACCENT LINE + BIG BOLD TITLE)
+# 5. HERO BANNER
 # ==============================================================================
 st.markdown('''
 <div class="hero-container">
@@ -446,35 +491,48 @@ st.markdown('''
 ''', unsafe_allow_html=True)
 
 # ==============================================================================
-# 6. SEARCH BAR (BAR LỌC NHANH TRUY VẤN DARK STYLE)
+# 6. INLINE FORM: THÊM HỒ SƠ VAY MỚI TRỰC TIẾP
 # ==============================================================================
-st.markdown('<div class="search-section">', unsafe_allow_html=True)
-s_col1, s_col2, s_col3, s_col4 = st.columns([1, 1, 1, 1])
+st.markdown('<div class="add-form-container">', unsafe_allow_html=True)
+st.markdown('<div class="form-header-title">➕ NHẬP HỒ SƠ VAY MỚI ĐỂ AI ĐÁNH GIÁ RỦI RO</div>', unsafe_allow_html=True)
 
-with s_col1:
-    st.markdown("<span style='color:#cbd5e1; font-weight:700; font-size:0.95rem;'>Chọn tỉnh/thành phố</span>", unsafe_allow_html=True)
-    sel_city = st.selectbox("", ["Chọn tỉnh/thành phố", "TP. Hồ Chí Minh", "Hà Nội", "Đà Nẵng"], label_visibility="collapsed")
+with st.form("add_loan_inline_form", clear_on_submit=False):
+    f_col1, f_col2, f_col3, f_col4, f_col5 = st.columns([1.5, 1.3, 1.4, 1.2, 1.3])
 
-with s_col2:
-    st.markdown("<span style='color:#cbd5e1; font-weight:700; font-size:0.95rem;'>Chọn loại rủi ro</span>", unsafe_allow_html=True)
-    sel_type = st.selectbox("", ["Chọn loại rủi ro", "Gian lận IP/Device", "Proxy / VPN", "Blacklist trùng lặp"], label_visibility="collapsed")
+    with f_col1:
+        new_name = st.text_input("Họ và Tên", "Trần Văn Mới")
+        new_nid = st.text_input("Số CCCD", "038099005566")
 
-with s_col3:
-    st.markdown("<span style='color:#cbd5e1; font-weight:700; font-size:0.95rem;'>Chọn trạng thái AI</span>", unsafe_allow_html=True)
-    sel_status = st.selectbox("", ["Chọn trạng thái AI", "Đã duyệt (APPROVED)", "Từ chối (REJECTED)"], label_visibility="collapsed")
+    with f_col2:
+        new_amount = st.number_input("Số tiền vay (VNĐ)", min_value=1000000, value=20000000, step=1000000)
+        new_ip = st.text_input("Địa chỉ IP", "27.67.42.19")
 
-with s_col4:
-    st.markdown("<div style='height: 22px;'></div>", unsafe_allow_html=True)
-    if st.button("🔍 PHÂN TÍCH NHANH", use_container_width=True, key="search_btn"):
-        st.session_state.active_tab = "Analytics AI"
+    with f_col3:
+        new_fp = st.text_input("Fingerprint Thiết bị", "FP-CC44B109")
+        new_proxy = st.checkbox("Sử dụng Proxy / VPN?", value=False)
+
+    with f_col4:
+        new_lat = st.number_input("Vĩ độ (Lat)", value=10.7769, format="%.4f")
+        new_lng = st.number_input("Kinh độ (Lng)", value=106.7009, format="%.4f")
+
+    with f_col5:
+        submit_btn = st.form_submit_button("🚀 ĐÁNH GIÁ AI", use_container_width=True)
+
+    if submit_btn:
+        app_id, risk, decision = add_new_application(
+            new_name, new_nid, new_amount, new_ip, new_fp, new_lat, new_lng, new_proxy
+        )
+        if decision == "APPROVED":
+            st.success(f"✅ Đã duyệt đơn **{app_id}**! Điểm Rủi Ro AI: **{risk}%** (An Toàn)")
+        else:
+            st.error(f"🚨 Từ chối đơn **{app_id}**! Điểm Rủi Ro AI: **{risk}%** (Phát Hiện Rủi Ro)")
         st.rerun()
 
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 7. SECTION CONTROLLER
+# 7. SECTION ROUTER
 # ==============================================================================
-
 if st.session_state.active_tab == "Overview":
     st.markdown('''
     <div class="section-title-box">
@@ -483,7 +541,6 @@ if st.session_state.active_tab == "Overview":
     </div>
     ''', unsafe_allow_html=True)
 
-    # Hiển thị dạng Card 3 cột chuẩn Dark Theme
     card_imgs = [
         "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1000&auto=format&fit=crop",
         "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=1000&auto=format&fit=crop",
@@ -513,7 +570,7 @@ if st.session_state.active_tab == "Overview":
                     <div class="card-info">🌐 IP: <b>{row["ip_address"]}</b></div>
                     <div class="card-info">📐 Device Hash: <b>{row["device_hash"]}</b></div>
                     <div class="card-info">🚨 Risk Score: <b style="color:{status_color};">{row["risk_score"]}%</b></div>
-                    <div style="margin-top:12px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="margin-top:12px;">
                         <div class="price-tag">{row["loan_amount"]:,.0f} VNĐ</div>
                     </div>
                 </div>
@@ -660,7 +717,7 @@ elif st.session_state.active_tab == "Rules Engine":
     st.success(f"✅ **Cấu hình hiện tại:** Đơn vay sẽ bị TỪ CHỐI nếu Điểm Rủi Ro >= **{st.session_state.risk_threshold}%**.")
 
 # ==============================================================================
-# 8. FOOTER "VÌ SAO BẠN CHỌN NEXUS AI?"
+# 8. FOOTER
 # ==============================================================================
 st.markdown('''
 <div class="why-section">
