@@ -3,3 +3,5 @@ networkx
 numpy
 pandas
 pyvis
+folium
+streamlit-folium
