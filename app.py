@@ -10,19 +10,18 @@ import streamlit.components.v1 as components
 from streamlit_autorefresh import st_autorefresh
 
 # ==============================================================================
-# 1. ENTERPRISE PAGE CONFIG & MODERN DARK UI STYLING
+# 1. PAGE CONFIG & MODERN AI PORTAL THEME CSS
 # ==============================================================================
 st.set_page_config(
-    page_title="NEXUS Risk Platform | Enterprise BNPL Fraud Engine",
-    page_icon="🛡️",
+    page_title="NEXUS AI - Hệ Thống Phân Tích Rủi Ro Tín Dụng",
+    page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Autorefresh mỗi 15 giây
-st_autorefresh(interval=15000, key="nexus_enterprise_sync")
+st_autorefresh(interval=15000, key="nexus_ai_sync")
 
-# Khởi tạo Session State cho Navigation & Rules Engine
+# Session State
 if "active_tab" not in st.session_state:
     st.session_state.active_tab = "Overview"
 if "risk_threshold" not in st.session_state:
@@ -32,154 +31,220 @@ if "proxy_penalty" not in st.session_state:
 if "blacklist_penalty" not in st.session_state:
     st.session_state.blacklist_penalty = 45.0
 
-# Enterprise Dark Theme CSS
+# CSS Bố Cục Portal Chuyên Nghiệp Chuẩn Đề Tài AI
 st.markdown('''
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-
-    :root {
-        --bg-dark: #050811;
-        --card-bg: #0e1726;
-        --card-border: #1e293b;
-        --accent-blue: #38bdf8;
-        --accent-purple: #c084fc;
-        --accent-green: #10b981;
-        --accent-red: #f43f5e;
-        --text-main: #f8fafc;
-        --text-muted: #94a3b8;
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap');
 
     html, body, [class*="css"] {
-        font-family: 'Plus Jakarta Sans', sans-serif !important;
-        background-color: var(--bg-dark) !important;
-        color: var(--text-main) !important;
+        font-family: 'Roboto', sans-serif !important;
+        background-color: #f8f9fa !important;
+        color: #333333 !important;
     }
     
     .stApp {
-        background-color: var(--bg-dark);
+        background-color: #ffffff;
     }
 
-    /* Top Navbar Layout */
-    .top-navbar-container {
-        background: #0b1120;
-        border: 1px solid #1e293b;
-        border-radius: 12px;
-        padding: 0.6rem 1.2rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+    header[data-testid="stHeader"] {
+        display: none !important;
+    }
+    .block-container {
+        padding: 0rem !important;
+        max-width: 100% !important;
+    }
+
+    /* 1. TOP NAVBAR HEADER */
+    .top-header {
+        background: #ffffff;
+        padding: 0.8rem 4%;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.03);
     }
     .brand-logo {
-        width: 38px;
-        height: 38px;
-        background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 800;
-        font-size: 1.2rem;
-        color: #050811;
+        font-size: 1.8rem;
+        font-weight: 900;
+        color: #2e7d32;
+        letter-spacing: -0.5px;
     }
-    .brand-name {
-        font-weight: 800;
-        font-size: 1.2rem;
-        letter-spacing: -0.02em;
-        background: linear-gradient(90deg, #38bdf8, #c084fc);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+    .brand-logo span {
+        color: #0284c7;
     }
 
-    /* Navbar Tab Buttons Styling */
+    /* Styling nút bấm trên Menu Navbar */
     div[data-testid="stColumn"] > div > div > button {
         background-color: transparent !important;
         border: none !important;
-        color: #94a3b8 !important;
-        font-weight: 600 !important;
-        font-size: 0.88rem !important;
-        padding: 0.5rem 0.75rem !important;
-        border-radius: 6px !important;
-        transition: all 0.2s ease !important;
+        color: #444444 !important;
+        font-weight: 700 !important;
+        font-size: 0.82rem !important;
+        padding: 0.5rem 0.2rem !important;
     }
     div[data-testid="stColumn"] > div > div > button:hover {
-        color: #38bdf8 !important;
-        background: rgba(56, 189, 248, 0.08) !important;
+        color: #2ecc71 !important;
     }
 
-    /* Hero Banner */
-    .hero-carousel-container {
-        background: linear-gradient(135deg, #0e1726 0%, #1e1b4b 50%, #080d1a 100%);
-        border: 1px solid #334155;
-        border-radius: 16px;
-        padding: 2rem 2.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 20px 40px -15px rgba(0,0,0,0.6);
-    }
-    .hero-badge {
-        display: inline-block;
-        background: rgba(56, 189, 248, 0.1);
-        border: 1px solid rgba(56, 189, 248, 0.3);
-        color: #38bdf8;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        margin-bottom: 0.75rem;
-    }
-    .hero-title {
-        font-size: 1.75rem;
-        font-weight: 800;
-        color: #ffffff;
-        margin-bottom: 0.5rem;
-    }
-    .hero-desc {
-        color: #94a3b8;
-        font-size: 0.92rem;
-        line-height: 1.6;
-    }
-
-    /* Cards Grid */
-    .feature-card {
-        background: #0e1726;
-        border: 1px solid #1e293b;
-        border-radius: 14px;
-        padding: 1.25rem;
-        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.4);
-        height: 100%;
-    }
-    .card-banner {
+    /* 2. HERO BANNER */
+    .hero-container {
         width: 100%;
-        height: 85px;
-        background: #1e293b;
-        border-radius: 10px;
-        margin-bottom: 0.8rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
+        height: 380px;
+        background: url('https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat;
+        position: relative;
     }
-    .card-heading {
+
+    /* 3. SEARCH BAR (GREEN ZONE) */
+    .search-section {
+        background-color: #2ecc71;
+        padding: 1.2rem 8%;
+        margin-top: -5px;
+    }
+
+    /* 4. SECTION HEADER */
+    .section-title-box {
+        text-align: center;
+        padding: 2.5rem 1rem 1rem 1rem;
+    }
+    .section-subtitle {
+        color: #2ecc71;
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 0.2rem;
+    }
+    .section-main-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #2c3e50;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+    .section-desc {
+        color: #7f8c8d;
+        font-size: 0.95rem;
+        margin-top: 0.3rem;
+    }
+
+    /* 5. AI APPLICATION CARDS */
+    .bds-card {
+        background: #ffffff;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+        transition: transform 0.3s, box-shadow 0.3s;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .bds-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .card-img-container {
+        position: relative;
+        height: 180px;
+        width: 100%;
+    }
+    .card-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .badge-new {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: #0284c7;
+        color: white;
+        font-size: 0.7rem;
+        font-weight: bold;
+        padding: 3px 8px;
+        border-radius: 3px;
+    }
+    .badge-vip {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-top: 50px solid #2ecc71;
+        border-left: 50px solid transparent;
+    }
+    .badge-vip-rejected {
+        border-top-color: #e74c3c !important;
+    }
+    .badge-vip-text {
+        position: absolute;
+        top: 8px;
+        right: 4px;
+        color: white;
+        font-size: 0.65rem;
+        font-weight: bold;
+        transform: rotate(45deg);
+    }
+    .card-body {
+        padding: 1rem;
+    }
+    .card-title {
         font-size: 1.05rem;
         font-weight: 700;
-        color: #f8fafc;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+    .card-info {
+        font-size: 0.85rem;
+        color: #555555;
         margin-bottom: 0.3rem;
     }
-    .card-text {
-        font-size: 0.83rem;
-        color: #94a3b8;
-        line-height: 1.5;
-        margin-bottom: 0.8rem;
+    .price-tag {
+        color: #e74c3c;
+        font-weight: 800;
+        font-size: 1.15rem;
     }
 
-    /* Sidebar */
-    div[data-testid="stSidebar"] {
-        background-color: #040710 !important;
-        border-right: 1px solid #1a2333;
+    /* 6. WHY CHOOSE US FOOTER SECTION */
+    .why-section {
+        background-color: #1a252f;
+        color: white;
+        padding: 3.5rem 8% 2rem 8%;
+        text-align: center;
+        margin-top: 3rem;
+    }
+    .why-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    .why-subtitle {
+        color: #bdc3c7;
+        font-size: 0.95rem;
+        margin-bottom: 2.5rem;
+    }
+    .feature-icon {
+        font-size: 2.2rem;
+        color: #2ecc71;
+        margin-bottom: 0.8rem;
+    }
+    .feature-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin-bottom: 0.4rem;
+    }
+    .feature-desc {
+        color: #95a5a6;
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+
+    section[data-testid="stSidebar"] {
+        background-color: #ffffff !important;
+        border-right: 1px solid #e2e8f0;
     }
 </style>
 ''', unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. CSDL SQLITE & GRAPH ENGINE
+# 2. CSDL SQLITE & GRAPH ENGINE (NỘI DUNG NGUYÊN BẢN)
 # ==============================================================================
 def init_db():
     conn = sqlite3.connect("bnpl_enterprise.db")
@@ -225,7 +290,6 @@ def add_new_application(name, nid, amount, ip, fp, lat, lng, is_proxy):
     count = cur.fetchone()[0] + 1
     app_id = f"APP-88{count:02d}"
     
-    # AI Rules Scoring Engine linh hoạt dựa trên Session State
     risk = 10.0
     if is_proxy: 
         risk += st.session_state.proxy_penalty
@@ -269,15 +333,15 @@ def fetch_data():
 
     return G, df
 
-def render_pyvis_graph(graph, highlight_node=None, height="500px"):
-    net = Network(height=height, width="100%", bgcolor="#050811", font_color="#f8fafc")
+def render_pyvis_graph(graph, highlight_node=None, height="450px"):
+    net = Network(height=height, width="100%", bgcolor="#ffffff", font_color="#333333")
     net.from_nx(graph)
     net.barnes_hut(gravity=-3000, central_gravity=0.3, spring_length=90)
     
     for node in net.nodes:
         if highlight_node and node["id"] == highlight_node:
-            node["size"] = 32
-            node["color"] = "#facc15"
+            node["size"] = 30
+            node["color"] = "#f1c40f"
         elif node.get("type") == "Application":
             node["size"] = 18
 
@@ -289,9 +353,9 @@ init_db()
 G, df_apps = fetch_data()
 
 # ==============================================================================
-# 3. SIDEBAR: TẠO HỒ SƠ VAY MỚI & THÔNG TIN HỆ THỐNG
+# 3. SIDEBAR: TẠO HỒ SƠ VAY MỚI (NỘI DUNG NGUYÊN BẢN)
 # ==============================================================================
-st.sidebar.title("🛠️ Risk Management Console")
+st.sidebar.title("🤖 AI Risk Management")
 
 with st.sidebar.expander("➕ **NHẬP HỒ SƠ VAY MỚI**", expanded=True):
     with st.form("add_loan_form", clear_on_submit=True):
@@ -320,128 +384,118 @@ app_list = [n for n, d in G.nodes(data=True) if d.get("type") == "Application"]
 selected_app = st.sidebar.selectbox("📋 Chọn Hồ Sơ Xem Chi Tiết:", app_list if app_list else ["N/A"])
 
 # ==============================================================================
-# 4. SECTION 1: TOP NAVBAR INTERACTIVE
+# 4. TOP NAVBAR HEADER (ĐÚNG CHUYÊN NGÀNH AI / TÍN DỤNG)
 # ==============================================================================
-st.markdown('<div class="top-navbar-container">', unsafe_allow_html=True)
-nav_col1, nav_col2, nav_col3 = st.columns([0.26, 0.60, 0.14])
+st.markdown('''
+<div class="top-header">
+    <div class="brand-logo">NEXUS<span>AI</span></div>
+</div>
+''', unsafe_allow_html=True)
 
-with nav_col1:
-    st.markdown('''
-    <div style="display: flex; align-items: center; gap: 10px;">
-        <div class="brand-logo">N</div>
-        <div class="brand-name">NEXUS RISK PLATFORM</div>
-    </div>
-    ''', unsafe_allow_html=True)
+nav_col1, nav_col2, nav_col3, nav_col4, nav_col5, nav_col6 = st.columns([1.2, 1.2, 1.3, 1.2, 1.3, 1.3])
 
-with nav_col2:
-    t1, t2, t3, t4, t5 = st.columns(5)
-    if t1.button("🌐 Tổng Quan"): st.session_state.active_tab = "Overview"
-    if t2.button("🕸️ Đồ Thị Mạng"): st.session_state.active_tab = "Network Graph"
-    if t3.button("📊 Analytics AI"): st.session_state.active_tab = "Analytics AI"
-    if t4.button("📍 Bản Đồ Vị Trí"): st.session_state.active_tab = "GeoIP Map"
-    if t5.button("⚙️ Rules Cấu Hình"): st.session_state.active_tab = "Rules Engine"
+with nav_col1: 
+    if st.button("TRANG CHỦ", key="nb1"): st.session_state.active_tab = "Overview"
+with nav_col2: 
+    if st.button("MÔ HÌNH AI", key="nb2"): st.session_state.active_tab = "Rules Engine"
+with nav_col3: 
+    if st.button("ĐỒ THỊ NETWORK", key="nb3"): st.session_state.active_tab = "Network Graph"
+with nav_col4: 
+    if st.button("BẢN ĐỒ GEOIP", key="nb4"): st.session_state.active_tab = "GeoIP Map"
+with nav_col5: 
+    if st.button("ANALYTICS & BÁO CÁO", key="nb5"): st.session_state.active_tab = "Analytics AI"
+with nav_col6:
+    st.button("Liên hệ ngay", key="btn_contact")
 
-with nav_col3:
-    st.markdown('''
-    <div style="text-align: right; margin-top: 5px;">
-        <span style="font-size: 0.78rem; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #34d399; padding: 5px 10px; border-radius: 20px; font-weight: 600;">
-            🟢 System Online
-        </span>
-    </div>
-    ''', unsafe_allow_html=True)
+# ==============================================================================
+# 5. HERO BANNER
+# ==============================================================================
+st.markdown('<div class="hero-container"></div>', unsafe_allow_html=True)
+
+# ==============================================================================
+# 6. GREEN SEARCH BAR (BAR LỌC NHANH TRUY VẤN AI)
+# ==============================================================================
+st.markdown('<div class="search-section">', unsafe_allow_html=True)
+s_col1, s_col2, s_col3, s_col4 = st.columns([1, 1, 1, 1])
+
+with s_col1:
+    st.markdown("<span style='color:white; font-weight:bold; font-size:0.85rem;'>Chọn tỉnh/thành phố</span>", unsafe_allow_html=True)
+    sel_city = st.selectbox("", ["Chọn tỉnh/thành phố", "TP. Hồ Chí Minh", "Hà Nội", "Đà Nẵng"], label_visibility="collapsed")
+
+with s_col2:
+    st.markdown("<span style='color:white; font-weight:bold; font-size:0.85rem;'>Chọn loại rủi ro</span>", unsafe_allow_html=True)
+    sel_type = st.selectbox("", ["Chọn loại rủi ro", "Gian lận IP/Device", "Proxy / VPN", "Blacklist trùng lặp"], label_visibility="collapsed")
+
+with s_col3:
+    st.markdown("<span style='color:white; font-weight:bold; font-size:0.85rem;'>Chọn trạng thái AI</span>", unsafe_allow_html=True)
+    sel_status = st.selectbox("", ["Chọn trạng thái AI", "Đã duyệt (APPROVED)", "Từ chối (REJECTED)"], label_visibility="collapsed")
+
+with s_col4:
+    st.markdown("<div style='height: 22px;'></div>", unsafe_allow_html=True)
+    if st.button("🔍 PHÂN TÍCH NHANH", use_container_width=True, key="search_btn"):
+        st.session_state.active_tab = "Analytics AI"
+        st.rerun()
+
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 5. HERO BANNER CAROUSEL
+# 7. SECTION CONTROLLER (CÁC CHỨC NĂNG BÊN TRONG CỦA BẠN)
 # ==============================================================================
-if "slide_idx" not in st.session_state:
-    st.session_state.slide_idx = 0
 
-slides = [
-    {
-        "badge": "⚡ GRAPH NEURAL NETWORK v5.2",
-        "title": "Phát Hiện Chuỗi Bùng Nợ Tín Dụng Realtime",
-        "desc": "Thuật toán AI tự động quét phân tích Topology kết nối thiết bị (Device Fingerprint) và IP truy cập để phát hiện các hành vi gian lận mở nhiều tài khoản ảo."
-    },
-    {
-        "badge": "🛡️ HIGH-RISK PROXY & DEVICE DETECTOR",
-        "title": "Cảnh Báo Sớm Thiết Bị Dùng Chung Bất Thường",
-        "desc": "Truy vết tức thì các nhóm đối tượng sử dụng chung 1 phần cứng điện thoại/máy tính để đăng ký nhiều khoản vay cùng lúc."
-    },
-    {
-        "badge": "🗺️ SPATIAL GEOLOCATION MATRIX",
-        "title": "Phân Tích Mật Độ Gian Lận Theo Tọa Độ Địa Lý",
-        "desc": "Tích hợp GIS GeoIP theo dõi chính xác vị trí thực tế của đơn vay, phát hiện việc giả lập vị trí thông qua VPN hoặc Proxy."
-    }
-]
-
-cur_slide = slides[st.session_state.slide_idx]
-c_hero, c_btn = st.columns([0.88, 0.12])
-
-with c_hero:
-    st.markdown(f'''
-    <div class="hero-carousel-container">
-        <div class="hero-badge">{cur_slide['badge']}</div>
-        <div class="hero-title">{cur_slide['title']}</div>
-        <div class="hero-desc">{cur_slide['desc']}</div>
+if st.session_state.active_tab == "Overview":
+    st.markdown('''
+    <div class="section-title-box">
+        <div class="section-subtitle">//</div>
+        <div class="section-main-title">HỒ SƠ AI PHÂN TÍCH NỔI BẬT</div>
+        <div class="section-desc">Tổng hợp các hồ sơ xin cấp hạn mức tín dụng BNPL được đánh giá bởi thuật toán AI & Graph Neural Network thời điểm hiện tại</div>
     </div>
     ''', unsafe_allow_html=True)
 
-with c_btn:
-    st.markdown("<div style='height: 25px;'></div>", unsafe_allow_html=True)
-    if st.button("◀ Prev", use_container_width=True, key="h_prev"):
-        st.session_state.slide_idx = (st.session_state.slide_idx - 1) % len(slides)
-        st.rerun()
-    if st.button("Next ▶", use_container_width=True, key="h_next"):
-        st.session_state.slide_idx = (st.session_state.slide_idx + 1) % len(slides)
-        st.rerun()
-
-# ==============================================================================
-# 6. DYNAMIC TAB VIEW CONTROLLER (XỬ LÝ TOÀN BỘ CHỨC NĂNG BÊN TRONG)
-# ==============================================================================
-
-# TAB 1: OVERVIEW (TỔNG QUAN)
-if st.session_state.active_tab == "Overview":
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.markdown('''
-        <div class="feature-card">
-            <div class="card-banner" style="color: #38bdf8;">🕸️</div>
-            <div class="card-heading">Đồ Thị Mạng Realtime</div>
-            <div class="card-text">Mô phỏng cụm liên kết đa chiều giữa đơn vay, IP và Fingerprint thiết bị để phát hiện vòng bùng nợ.</div>
-        </div>
-        ''', unsafe_allow_html=True)
-        if st.button("Mở Đồ Thị Mạng ➔", key="go_graph", use_container_width=True):
-            st.session_state.active_tab = "Network Graph"
-            st.rerun()
-
-    with c2:
-        st.markdown('''
-        <div class="feature-card">
-            <div class="card-banner" style="color: #c084fc;">📊</div>
-            <div class="card-heading">AI Risk Scoring</div>
-            <div class="card-text">Bảng tổng hợp chỉ số rủi ro, ma trận xét duyệt tự động và chi tiết các trường dữ liệu nghi vấn.</div>
-        </div>
-        ''', unsafe_allow_html=True)
-        if st.button("Mở Analytics AI ➔", key="go_analytics", use_container_width=True):
-            st.session_state.active_tab = "Analytics AI"
-            st.rerun()
-
-    with c3:
-        st.markdown('''
-        <div class="feature-card">
-            <div class="card-banner" style="color: #10b981;">📍</div>
-            <div class="card-heading">GeoIP Tracking</div>
-            <div class="card-text">Theo dõi bản đồ vị trí thực tế của khách hàng vay, phát hiện VPN/Proxy che giấu vị trí.</div>
-        </div>
-        ''', unsafe_allow_html=True)
-        if st.button("Mở Bản Đồ Vị Trí ➔", key="go_map", use_container_width=True):
-            st.session_state.active_tab = "GeoIP Map"
-            st.rerun()
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    col_graph, col_info = st.columns([1.8, 1.2])
+    # Hiển thị dạng Card 3 cột chuẩn Portal BDS05
+    card_imgs = [
+        "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?q=80&w=1000&auto=format&fit=crop"
+    ]
     
+    grid_cols = st.columns(3)
+    for idx, (_, row) in enumerate(df_apps.head(3).iterrows()):
+        with grid_cols[idx % 3]:
+            is_fraud = (row["decision"] == "REJECTED")
+            badge_class = "badge-vip badge-vip-rejected" if is_fraud else "badge-vip"
+            badge_text = "REJECTED" if is_fraud else "APPROVED"
+            
+            st.markdown(f'''
+            <div class="bds-card">
+                <div class="card-img-container">
+                    <img src="{card_imgs[idx % 3]}" class="card-img" />
+                    <div class="badge-new">Mới đánh giá</div>
+                    <div class="{badge_class}"></div>
+                    <div class="badge-vip-text">{badge_text}</div>
+                </div>
+                <div class="card-body">
+                    <div class="card-title">Hồ sơ: {row["customer_name"]} – Mã: {row["app_id"]}</div>
+                    <div style="color: #7f8c8d; font-size: 0.8rem; margin-bottom: 0.5rem;">
+                        <b>Điểm nổi bật của AI Engine:</b><br>
+                        Phân tích liên kết mạng lưới IP, Device Hash & Tọa độ GeoIP...
+                    </div>
+                    <div class="card-info">📍 CCCD: <b>{row["national_id"]}</b></div>
+                    <div class="card-info">🌐 Địa chỉ IP: <b>{row["ip_address"]}</b></div>
+                    <div class="card-info">📐 Device Hash: <b>{row["device_hash"]}</b></div>
+                    <div class="card-info">🚨 Risk Score: <b>{row["risk_score"]}%</b></div>
+                    <div class="card-footer-custom" style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                        <div class="price-tag">{row["loan_amount"]:,.0f} VNĐ</div>
+                    </div>
+                </div>
+            </div>
+            ''', unsafe_allow_html=True)
+            if st.button("Xem chi tiết ➔", key=f"btn_det_{row['app_id']}", use_container_width=True):
+                st.session_state.active_tab = "Network Graph"
+                st.rerun()
+
+    st.markdown("<br><hr><br>", unsafe_allow_html=True)
+    
+    col_graph, col_info = st.columns([1.8, 1.2])
     with col_graph:
         st.markdown("##### 🕸️ Mạng Lưới Đồ Thị Liên Kết Đơn Vay")
         graph_html = render_pyvis_graph(G, highlight_node=selected_app, height="430px")
@@ -460,17 +514,26 @@ if st.session_state.active_tab == "Overview":
                       delta="🚨 TỪ CHỐI (RỦI RO CAO)" if is_bad else "✅ DUYỆT (AN TOÀN)", 
                       delta_color="inverse" if is_bad else "normal")
 
-# TAB 2: NETWORK GRAPH (ĐỒ THỊ MẠNG LƯỚI TOÀN MÀN HÌNH)
 elif st.session_state.active_tab == "Network Graph":
-    st.markdown("### 🕸️ Đồ Thị Mạng Lưới Liên Kết Gian Lận (Interactive Graph)")
-    st.info("💡 **Mẹo:** Bạn có thể kéo thả các Node, cuộn chuột để Zoom in/out hoặc di chuột vào các Node để xem thuộc tính.")
+    st.markdown('''
+    <div class="section-title-box">
+        <div class="section-subtitle">//</div>
+        <div class="section-main-title">ĐỒ THỊ MẠNG LƯỚI INTERACTIVE</div>
+        <div class="section-desc">Kéo thả các Node, cuộn chuột để Zoom in/out hoặc di chuột vào các Node để xem thuộc tính liên kết giữa các tài khoản vay</div>
+    </div>
+    ''', unsafe_allow_html=True)
     
-    graph_html = render_pyvis_graph(G, highlight_node=selected_app, height="620px")
-    components.html(graph_html, height=640)
+    graph_html = render_pyvis_graph(G, highlight_node=selected_app, height="600px")
+    components.html(graph_html, height=620)
 
-# TAB 3: ANALYTICS AI (THỐNG KÊ & BẢNG DỮ LIỆU CSDL)
 elif st.session_state.active_tab == "Analytics AI":
-    st.markdown("### 📊 Analytics AI & Quản Lý Hồ Sơ CSDL")
+    st.markdown('''
+    <div class="section-title-box">
+        <div class="section-subtitle">//</div>
+        <div class="section-main-title">ANALYTICS AI & QUẢN LÝ DỮ LIỆU</div>
+        <div class="section-desc">Hệ thống tổng hợp chỉ số rủi ro, bộ lọc dữ liệu thông minh và xuất báo cáo CSV</div>
+    </div>
+    ''', unsafe_allow_html=True)
     
     total_apps = len(df_apps)
     rejected_apps = len(df_apps[df_apps["decision"] == "REJECTED"])
@@ -484,7 +547,7 @@ elif st.session_state.active_tab == "Analytics AI":
     m4.metric("Tỷ Lệ Rủi Ro (Fraud Rate)", f"{fraud_rate:.1f}%")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("##### 🔍 Bộ Lọc & Tìm Kiếm Dữ Liệu")
+    st.markdown("##### 🔍 Bộ Lọc & Tìm Kiếm Dữ Liệu Hồ Sơ")
     
     flt1, flt2, flt3 = st.columns([1.5, 1, 1])
     search_q = flt1.text_input("🔎 Tìm theo Tên hoặc Mã đơn:", "")
@@ -501,11 +564,16 @@ elif st.session_state.active_tab == "Analytics AI":
     st.dataframe(filtered_df, use_container_width=True, hide_index=True)
 
     csv_data = filtered_df.to_csv(index=False).encode('utf-8')
-    st.download_button("📥 Xuất Dữ Liệu Lọc (CSV)", data=csv_data, file_name="bnpl_risk_report.csv", mime="text/csv")
+    st.download_button("📥 Xuất Báo Cáo Dữ Liệu AI (CSV)", data=csv_data, file_name="nexus_ai_risk_report.csv", mime="text/csv")
 
-# TAB 4: GEOIP MAP (BẢN ĐỒ PHÂN BỐ TỌA ĐỘ GIẢI NGÂN)
 elif st.session_state.active_tab == "GeoIP Map":
-    st.markdown("### 📍 Bản Đồ Phân Bố Đơn Vay & Tọa Độ GeoIP Realtime")
+    st.markdown('''
+    <div class="section-title-box">
+        <div class="section-subtitle">//</div>
+        <div class="section-main-title">BẢN ĐỒ VỊ TRÍ REALTIME GEOIP</div>
+        <div class="section-desc">Theo dõi tọa độ thực tế của khách hàng vay, phát hiện VPN/Proxy che giấu vị trí địa lý</div>
+    </div>
+    ''', unsafe_allow_html=True)
     
     map_df = df_apps.copy()
     map_df["color"] = map_df["decision"].apply(lambda x: [244, 63, 94, 200] if x == "REJECTED" else [16, 185, 129, 200])
@@ -518,37 +586,32 @@ elif st.session_state.active_tab == "GeoIP Map":
         pitch=45
     )
 
-    layer_scatterplot = pdk.Layer(
-        "ScatterplotLayer",
-        data=map_df,
-        get_position=["longitude", "latitude"],
-        get_fill_color="color",
-        get_radius=350,
-        pickable=True
-    )
-
     layer_column = pdk.Layer(
         "ColumnLayer",
         data=map_df,
         get_position=["longitude", "latitude"],
         get_elevation="elevation",
         elevation_scale=1,
-        radius=150,
+        radius=180,
         get_fill_color="color",
         pickable=True,
         extruded=True
     )
 
     st.pydeck_chart(pdk.Deck(
-        layers=[layer_scatterplot, layer_column], 
+        layers=[layer_column], 
         initial_view_state=view_state, 
         tooltip={"text": "Mã đơn: {app_id}\nKhách hàng: {customer_name}\nĐiểm Risk: {risk_score}%\nTrạng thái: {decision}"}
     ))
 
-# TAB 5: RULES ENGINE (CẤU HÌNH THUẬT TOÁN CHẤM ĐIỂM RỦI RO)
 elif st.session_state.active_tab == "Rules Engine":
-    st.markdown("### ⚙️ Dynamic Risk Scoring Engine Rules")
-    st.info("🛠️ Các thiết lập tại đây sẽ áp dụng trực tiếp cho các hồ sơ vay mới được tạo từ Sidebar.")
+    st.markdown('''
+    <div class="section-title-box">
+        <div class="section-subtitle">//</div>
+        <div class="section-main-title">MÔ HÌNH & RULES CẤU HÌNH AI ENGINE</div>
+        <div class="section-desc">Thay đổi trọng số rủi ro trực tiếp trên giao diện và áp dụng tức thời vào thuật toán chấm điểm</div>
+    </div>
+    ''', unsafe_allow_html=True)
 
     col_r1, col_r2 = st.columns(2)
     with col_r1:
@@ -569,3 +632,42 @@ elif st.session_state.active_tab == "Rules Engine":
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.success(f"✅ **Cấu hình hiện tại:** Đơn vay sẽ bị TỪ CHỐI nếu Điểm Rủi Ro >= **{st.session_state.risk_threshold}%**.")
+
+# ==============================================================================
+# 8. SECTION FOOTER "VÌ SAO BẠN CHỌN NEXUS AI?"
+# ==============================================================================
+st.markdown('''
+<div class="why-section">
+    <div class="why-title">Vì sao bạn chọn NEXUS AI?</div>
+    <div class="why-subtitle">Chúng tôi cung cấp đầy đủ và chính xác nhất thông tin đánh giá rủi ro tín dụng trên toàn quốc song hành với dịch vụ tư vấn nhanh chóng và hiệu quả</div>
+</div>
+''', unsafe_allow_html=True)
+
+f_col1, f_col2, f_col3 = st.columns(3)
+
+with f_col1:
+    st.markdown('''
+    <div style="text-align: center; padding: 0 1rem;">
+        <div class="feature-icon">⚙️</div>
+        <div class="feature-title">Chất lượng tốt nhất</div>
+        <div class="feature-desc">Nghiên cứu, thiết kế và phát triển mô hình AI xét duyệt tín dụng với hệ thống dịch vụ chất lượng tốt nhất.</div>
+    </div>
+    ''', unsafe_allow_html=True)
+
+with f_col2:
+    st.markdown('''
+    <div style="text-align: center; padding: 0 1rem;">
+        <div class="feature-icon">🔍</div>
+        <div class="feature-title">Tìm kiếm thông tin dễ dàng</div>
+        <div class="feature-desc">Tìm kiếm lịch sử tín dụng và ma trận rủi ro bạn muốn theo danh mục cực kỳ dễ dàng.</div>
+    </div>
+    ''', unsafe_allow_html=True)
+
+with f_col3:
+    st.markdown('''
+    <div style="text-align: center; padding: 0 1rem;">
+        <div class="feature-icon">🔗</div>
+        <div class="feature-title">Kết nối với nhà đầu tư</div>
+        <div class="feature-desc">Nền tảng AI sẽ mang đến những giải pháp bảo vệ dòng vốn tốt nhất đáp ứng nhu cầu của bạn.</div>
+    </div>
+    ''', unsafe_allow_html=True)
