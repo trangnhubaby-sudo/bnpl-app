@@ -69,7 +69,7 @@ st.markdown('''
         color: #ff9f43;
     }
 
-    /* 2. NAVIGATION MENU (ÉP TẤT CẢ CÁC KHUNG TRẮNG TO ĐỀU VÀ TRẢI DÀI) */
+    /* 2. NAVIGATION MENU (ÉP 5 KHUNG TRẮNG TO ĐỀU, TRẢI DÀI KHỚP KHUNG) */
     div[data-testid="stHorizontalBlock"] {
         gap: 15px !important;
         padding: 0.5rem 2rem !important;
@@ -81,15 +81,15 @@ st.markdown('''
         flex: 1 !important;
     }
 
-    /* Ép nút bấm tràn viền cột, kích thước to và đều đặn tuyệt đối */
+    /* Ép nút bấm trắng tràn viền cột, kích thước to rộng đều đặn như yêu cầu */
     div[data-testid="column"] > div > div > button {
         background-color: #ffffff !important;
         border: none !important;
         border-radius: 12px !important;
         color: #1a202c !important;
         font-weight: 800 !important;
-        font-size: 1.1rem !important;
-        padding: 1rem 0.5rem !important;
+        font-size: 1.05rem !important;
+        padding: 1.1rem 1.5rem !important;
         width: 100% !important;
         text-align: center !important;
         text-transform: uppercase !important;
@@ -440,7 +440,7 @@ app_list = [n for n, d in G.nodes(data=True) if d.get("type") == "Application"]
 selected_app = st.sidebar.selectbox("📋 Chọn Hồ Sơ Xem Chi Tiết:", app_list if app_list else ["N/A"])
 
 # ==============================================================================
-# 4. TOP NAVBAR HEADER (CHIA 5 CỘT ĐỀU NHAU, BỎ SĐT)
+# 4. TOP NAVBAR HEADER (CHIA ĐÚNG 5 CỘT ĐỀU NHAU, BỎ SĐT)
 # ==============================================================================
 st.markdown('''
 <div class="top-header">
@@ -448,7 +448,7 @@ st.markdown('''
 </div>
 ''', unsafe_allow_html=True)
 
-# Chia chính xác 5 cột đều nhau tuyệt đối cho 5 nút menu
+# Chia chính xác 5 cột đều nhau cho 5 nút Menu
 cols = st.columns(5)
 
 with cols[0]:
