@@ -10,7 +10,7 @@ import streamlit.components.v1 as components
 from streamlit_autorefresh import st_autorefresh
 
 # ==============================================================================
-# 1. PAGE CONFIG & MODERN AI PORTAL THEME CSS
+# 1. PAGE CONFIG & DARK SPACE THEME CSS (MATCHING SAMPLE IMAGE)
 # ==============================================================================
 st.set_page_config(
     page_title="NEXUS AI - Hệ Thống Phân Tích Rủi Ro Tín Dụng",
@@ -31,19 +31,19 @@ if "proxy_penalty" not in st.session_state:
 if "blacklist_penalty" not in st.session_state:
     st.session_state.blacklist_penalty = 45.0
 
-# CSS Bố Cục Portal Chuyên Nghiệp Chuẩn Đề Tài AI
+# CSS Dark Theme Chuẩn Mẫu (Font chữ to, rõ ràng, màu xanh đen & cam)
 st.markdown('''
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Roboto:wght@400;500;700&display=swap');
 
     html, body, [class*="css"] {
-        font-family: 'Roboto', sans-serif !important;
-        background-color: #f8f9fa !important;
-        color: #333333 !important;
+        font-family: 'Montserrat', 'Roboto', sans-serif !important;
+        background-color: #070b14 !important;
+        color: #e2e8f0 !important;
     }
     
     .stApp {
-        background-color: #ffffff;
+        background-color: #070b14;
     }
 
     header[data-testid="stHeader"] {
@@ -56,189 +56,213 @@ st.markdown('''
 
     /* 1. TOP NAVBAR HEADER */
     .top-header {
-        background: #ffffff;
-        padding: 0.8rem 4%;
-        border-bottom: 1px solid #eee;
+        background: #0a101d;
+        padding: 1.2rem 5%;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         display: flex;
         justify-content: space-between;
         align-items: center;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
     }
     .brand-logo {
-        font-size: 1.8rem;
+        font-size: 2.2rem;
         font-weight: 900;
-        color: #2e7d32;
-        letter-spacing: -0.5px;
+        color: #ffffff;
+        letter-spacing: 1px;
     }
     .brand-logo span {
-        color: #0284c7;
+        color: #ff9f43;
     }
 
-    /* Styling nút bấm trên Menu Navbar */
+    /* Styling nút bấm Menu Navigation (Font to hơn) */
     div[data-testid="stColumn"] > div > div > button {
         background-color: transparent !important;
         border: none !important;
-        color: #444444 !important;
+        color: #cbd5e1 !important;
         font-weight: 700 !important;
-        font-size: 0.82rem !important;
-        padding: 0.5rem 0.2rem !important;
+        font-size: 1.05rem !important;
+        padding: 0.6rem 0.5rem !important;
+        transition: all 0.3s ease;
     }
     div[data-testid="stColumn"] > div > div > button:hover {
-        color: #2ecc71 !important;
+        color: #ff9f43 !important;
     }
 
-    /* 2. HERO BANNER */
+    /* 2. HERO BANNER STYLE KHÔNG GIAN SÂU */
     .hero-container {
         width: 100%;
-        height: 380px;
-        background: url('https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat;
+        padding: 4rem 8% 3rem 8%;
+        background: linear-gradient(135deg, #070b14 0%, #0d1527 50%, #101a30 100%);
         position: relative;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .orange-line {
+        width: 70px;
+        height: 6px;
+        background-color: #ff9f43;
+        border-radius: 3px;
+        margin-bottom: 1.2rem;
+    }
+    .hero-subtitle {
+        color: #94a3b8;
+        font-size: 1.3rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+    .hero-title {
+        font-size: 3.2rem;
+        font-weight: 900;
+        color: #ffffff;
+        line-height: 1.2;
+        margin-bottom: 1.5rem;
     }
 
-    /* 3. SEARCH BAR (GREEN ZONE) */
+    /* Nút Cam chuẩn mẫu */
+    .orange-btn {
+        background-color: #ff9f43;
+        color: #000000;
+        font-weight: 800;
+        font-size: 1.1rem;
+        padding: 0.8rem 2.2rem;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        display: inline-block;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 15px rgba(255, 159, 67, 0.3);
+    }
+
+    /* 3. SEARCH BAR BAR LỌC NHANH */
     .search-section {
-        background-color: #2ecc71;
-        padding: 1.2rem 8%;
-        margin-top: -5px;
+        background-color: #0f172a;
+        padding: 1.8rem 8%;
+        border-top: 1px solid rgba(255,255,255,0.05);
+        border-bottom: 1px solid rgba(255,255,255,0.05);
     }
 
     /* 4. SECTION HEADER */
     .section-title-box {
         text-align: center;
-        padding: 2.5rem 1rem 1rem 1rem;
-    }
-    .section-subtitle {
-        color: #2ecc71;
-        font-size: 1.5rem;
-        font-weight: bold;
-        margin-bottom: 0.2rem;
+        padding: 3rem 1rem 1.5rem 1rem;
     }
     .section-main-title {
-        font-size: 2rem;
-        font-weight: 800;
-        color: #2c3e50;
+        font-size: 2.3rem;
+        font-weight: 900;
+        color: #ffffff;
         letter-spacing: 1px;
         text-transform: uppercase;
     }
     .section-desc {
-        color: #7f8c8d;
-        font-size: 0.95rem;
-        margin-top: 0.3rem;
+        color: #94a3b8;
+        font-size: 1.1rem;
+        margin-top: 0.5rem;
     }
 
-    /* 5. AI APPLICATION CARDS */
+    /* 5. AI CARDS (DARK MODE ENHANCED) */
     .bds-card {
-        background: #ffffff;
-        border-radius: 8px;
-        border: 1px solid #e2e8f0;
+        background: #0f172a;
+        border-radius: 12px;
+        border: 1px solid #1e293b;
         overflow: hidden;
         transition: transform 0.3s, box-shadow 0.3s;
-        margin-bottom: 1rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1.5rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
     }
     .bds-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        transform: translateY(-6px);
+        border-color: #ff9f43;
+        box-shadow: 0 12px 30px rgba(255, 159, 67, 0.2);
     }
     .card-img-container {
         position: relative;
-        height: 180px;
+        height: 190px;
         width: 100%;
     }
     .card-img {
         width: 100%;
         height: 100%;
         object-fit: cover;
+        filter: brightness(0.85);
     }
     .badge-new {
         position: absolute;
-        top: 10px;
-        left: 10px;
-        background: #0284c7;
-        color: white;
-        font-size: 0.7rem;
-        font-weight: bold;
-        padding: 3px 8px;
-        border-radius: 3px;
-    }
-    .badge-vip {
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 0;
-        height: 0;
-        border-top: 50px solid #2ecc71;
-        border-left: 50px solid transparent;
-    }
-    .badge-vip-rejected {
-        border-top-color: #e74c3c !important;
-    }
-    .badge-vip-text {
-        position: absolute;
-        top: 8px;
-        right: 4px;
-        color: white;
-        font-size: 0.65rem;
-        font-weight: bold;
-        transform: rotate(45deg);
+        top: 12px;
+        left: 12px;
+        background: #38bdf8;
+        color: #000000;
+        font-size: 0.8rem;
+        font-weight: 800;
+        padding: 4px 10px;
+        border-radius: 4px;
     }
     .card-body {
-        padding: 1rem;
+        padding: 1.3rem;
     }
     .card-title {
-        font-size: 1.05rem;
-        font-weight: 700;
-        color: #2c3e50;
-        margin-bottom: 0.5rem;
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #ffffff;
+        margin-bottom: 0.6rem;
     }
     .card-info {
-        font-size: 0.85rem;
-        color: #555555;
-        margin-bottom: 0.3rem;
-    }
-    .price-tag {
-        color: #e74c3c;
-        font-weight: 800;
-        font-size: 1.15rem;
-    }
-
-    /* 6. WHY CHOOSE US FOOTER SECTION */
-    .why-section {
-        background-color: #1a252f;
-        color: white;
-        padding: 3.5rem 8% 2rem 8%;
-        text-align: center;
-        margin-top: 3rem;
-    }
-    .why-title {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-    }
-    .why-subtitle {
-        color: #bdc3c7;
-        font-size: 0.95rem;
-        margin-bottom: 2.5rem;
-    }
-    .feature-icon {
-        font-size: 2.2rem;
-        color: #2ecc71;
-        margin-bottom: 0.8rem;
-    }
-    .feature-title {
-        font-size: 1.05rem;
-        font-weight: 700;
+        font-size: 1rem;
+        color: #cbd5e1;
         margin-bottom: 0.4rem;
     }
-    .feature-desc {
-        color: #95a5a6;
-        font-size: 0.85rem;
-        line-height: 1.5;
+    .price-tag {
+        color: #ff9f43;
+        font-weight: 900;
+        font-size: 1.35rem;
     }
 
+    /* 6. FOOTER SECTION */
+    .why-section {
+        background-color: #0a101d;
+        color: white;
+        padding: 4rem 8% 3rem 8%;
+        text-align: center;
+        margin-top: 4rem;
+        border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .why-title {
+        font-size: 2.3rem;
+        font-weight: 800;
+        margin-bottom: 0.8rem;
+    }
+    .why-subtitle {
+        color: #94a3b8;
+        font-size: 1.1rem;
+        margin-bottom: 3rem;
+    }
+    .feature-icon {
+        font-size: 2.5rem;
+        color: #ff9f43;
+        margin-bottom: 1rem;
+    }
+    .feature-title {
+        font-size: 1.2rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        color: #ffffff;
+    }
+    .feature-desc {
+        color: #94a3b8;
+        font-size: 0.98rem;
+        line-height: 1.6;
+    }
+
+    /* Sidebar Customization */
     section[data-testid="stSidebar"] {
-        background-color: #ffffff !important;
-        border-right: 1px solid #e2e8f0;
+        background-color: #0a101d !important;
+        border-right: 1px solid #1e293b;
+    }
+    
+    /* Input Styling Dark */
+    .stTextInput input, .stSelectbox select, .stNumberInput input {
+        font-size: 1.05rem !important;
     }
 </style>
 ''', unsafe_allow_html=True)
@@ -333,17 +357,17 @@ def fetch_data():
 
     return G, df
 
-def render_pyvis_graph(graph, highlight_node=None, height="450px"):
-    net = Network(height=height, width="100%", bgcolor="#ffffff", font_color="#333333")
+def render_pyvis_graph(graph, highlight_node=None, height="480px"):
+    net = Network(height=height, width="100%", bgcolor="#0a101d", font_color="#ffffff")
     net.from_nx(graph)
     net.barnes_hut(gravity=-3000, central_gravity=0.3, spring_length=90)
     
     for node in net.nodes:
         if highlight_node and node["id"] == highlight_node:
-            node["size"] = 30
-            node["color"] = "#f1c40f"
+            node["size"] = 32
+            node["color"] = "#ff9f43"
         elif node.get("type") == "Application":
-            node["size"] = 18
+            node["size"] = 20
 
     net.save_graph("temp_graph.html")
     with open("temp_graph.html", "r", encoding="utf-8") as f:
@@ -355,7 +379,7 @@ G, df_apps = fetch_data()
 # ==============================================================================
 # 3. SIDEBAR: TẠO HỒ SƠ VAY MỚI (NỘI DUNG NGUYÊN BẢN)
 # ==============================================================================
-st.sidebar.title("🤖 AI Risk Management")
+st.sidebar.title("🤖 AI Risk Platform")
 
 with st.sidebar.expander("➕ **NHẬP HỒ SƠ VAY MỚI**", expanded=True):
     with st.form("add_loan_form", clear_on_submit=True):
@@ -384,7 +408,7 @@ app_list = [n for n, d in G.nodes(data=True) if d.get("type") == "Application"]
 selected_app = st.sidebar.selectbox("📋 Chọn Hồ Sơ Xem Chi Tiết:", app_list if app_list else ["N/A"])
 
 # ==============================================================================
-# 4. TOP NAVBAR HEADER (ĐÚNG CHUYÊN NGÀNH AI / TÍN DỤNG)
+# 4. TOP NAVBAR HEADER (CÓ SỐ ĐIỆN THOẠI / NÚT CAM GIỐNG ẢNH MẪU)
 # ==============================================================================
 st.markdown('''
 <div class="top-header">
@@ -392,7 +416,7 @@ st.markdown('''
 </div>
 ''', unsafe_allow_html=True)
 
-nav_col1, nav_col2, nav_col3, nav_col4, nav_col5, nav_col6 = st.columns([1.2, 1.2, 1.3, 1.2, 1.3, 1.3])
+nav_col1, nav_col2, nav_col3, nav_col4, nav_col5, nav_col6 = st.columns([1.2, 1.2, 1.3, 1.2, 1.4, 1.3])
 
 with nav_col1: 
     if st.button("TRANG CHỦ", key="nb1"): st.session_state.active_tab = "Overview"
@@ -405,29 +429,38 @@ with nav_col4:
 with nav_col5: 
     if st.button("ANALYTICS & BÁO CÁO", key="nb5"): st.session_state.active_tab = "Analytics AI"
 with nav_col6:
-    st.button("Liên hệ ngay", key="btn_contact")
+    st.markdown('<button class="orange-btn" style="padding: 0.4rem 1rem; font-size: 0.95rem;">0969.699.499</button>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 5. HERO BANNER
+# 5. HERO BANNER CHUẨN MẪU (ORANGE ACCENT LINE + BIG BOLD TITLE)
 # ==============================================================================
-st.markdown('<div class="hero-container"></div>', unsafe_allow_html=True)
+st.markdown('''
+<div class="hero-container">
+    <div class="orange-line"></div>
+    <div class="hero-subtitle">AI RISK ANALYTICS PLATFORM</div>
+    <div class="hero-title">HỆ THỐNG AI PHÂN TÍCH<br>RỦI RO TÍN DỤNG HIỆU QUẢ NHẤT</div>
+    <div style="margin-top: 1.8rem;">
+        <span class="orange-btn">XEM NGAY</span>
+    </div>
+</div>
+''', unsafe_allow_html=True)
 
 # ==============================================================================
-# 6. GREEN SEARCH BAR (BAR LỌC NHANH TRUY VẤN AI)
+# 6. SEARCH BAR (BAR LỌC NHANH TRUY VẤN DARK STYLE)
 # ==============================================================================
 st.markdown('<div class="search-section">', unsafe_allow_html=True)
 s_col1, s_col2, s_col3, s_col4 = st.columns([1, 1, 1, 1])
 
 with s_col1:
-    st.markdown("<span style='color:white; font-weight:bold; font-size:0.85rem;'>Chọn tỉnh/thành phố</span>", unsafe_allow_html=True)
+    st.markdown("<span style='color:#cbd5e1; font-weight:700; font-size:0.95rem;'>Chọn tỉnh/thành phố</span>", unsafe_allow_html=True)
     sel_city = st.selectbox("", ["Chọn tỉnh/thành phố", "TP. Hồ Chí Minh", "Hà Nội", "Đà Nẵng"], label_visibility="collapsed")
 
 with s_col2:
-    st.markdown("<span style='color:white; font-weight:bold; font-size:0.85rem;'>Chọn loại rủi ro</span>", unsafe_allow_html=True)
+    st.markdown("<span style='color:#cbd5e1; font-weight:700; font-size:0.95rem;'>Chọn loại rủi ro</span>", unsafe_allow_html=True)
     sel_type = st.selectbox("", ["Chọn loại rủi ro", "Gian lận IP/Device", "Proxy / VPN", "Blacklist trùng lặp"], label_visibility="collapsed")
 
 with s_col3:
-    st.markdown("<span style='color:white; font-weight:bold; font-size:0.85rem;'>Chọn trạng thái AI</span>", unsafe_allow_html=True)
+    st.markdown("<span style='color:#cbd5e1; font-weight:700; font-size:0.95rem;'>Chọn trạng thái AI</span>", unsafe_allow_html=True)
     sel_status = st.selectbox("", ["Chọn trạng thái AI", "Đã duyệt (APPROVED)", "Từ chối (REJECTED)"], label_visibility="collapsed")
 
 with s_col4:
@@ -439,19 +472,18 @@ with s_col4:
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 7. SECTION CONTROLLER (CÁC CHỨC NĂNG BÊN TRONG CỦA BẠN)
+# 7. SECTION CONTROLLER
 # ==============================================================================
 
 if st.session_state.active_tab == "Overview":
     st.markdown('''
     <div class="section-title-box">
-        <div class="section-subtitle">//</div>
         <div class="section-main-title">HỒ SƠ AI PHÂN TÍCH NỔI BẬT</div>
-        <div class="section-desc">Tổng hợp các hồ sơ xin cấp hạn mức tín dụng BNPL được đánh giá bởi thuật toán AI & Graph Neural Network thời điểm hiện tại</div>
+        <div class="section-desc">Tổng hợp các hồ sơ xin cấp hạn mức tín dụng BNPL được đánh giá bởi thuật toán AI & Graph Neural Network</div>
     </div>
     ''', unsafe_allow_html=True)
 
-    # Hiển thị dạng Card 3 cột chuẩn Portal BDS05
+    # Hiển thị dạng Card 3 cột chuẩn Dark Theme
     card_imgs = [
         "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1000&auto=format&fit=crop",
         "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=1000&auto=format&fit=crop",
@@ -462,7 +494,7 @@ if st.session_state.active_tab == "Overview":
     for idx, (_, row) in enumerate(df_apps.head(3).iterrows()):
         with grid_cols[idx % 3]:
             is_fraud = (row["decision"] == "REJECTED")
-            badge_class = "badge-vip badge-vip-rejected" if is_fraud else "badge-vip"
+            status_color = "#f43f5e" if is_fraud else "#10b981"
             badge_text = "REJECTED" if is_fraud else "APPROVED"
             
             st.markdown(f'''
@@ -470,20 +502,18 @@ if st.session_state.active_tab == "Overview":
                 <div class="card-img-container">
                     <img src="{card_imgs[idx % 3]}" class="card-img" />
                     <div class="badge-new">Mới đánh giá</div>
-                    <div class="{badge_class}"></div>
-                    <div class="badge-vip-text">{badge_text}</div>
+                    <div style="position:absolute; top:12px; right:12px; background:{status_color}; color:#fff; font-weight:bold; padding:4px 10px; border-radius:4px; font-size:0.8rem;">{badge_text}</div>
                 </div>
                 <div class="card-body">
-                    <div class="card-title">Hồ sơ: {row["customer_name"]} – Mã: {row["app_id"]}</div>
-                    <div style="color: #7f8c8d; font-size: 0.8rem; margin-bottom: 0.5rem;">
-                        <b>Điểm nổi bật của AI Engine:</b><br>
-                        Phân tích liên kết mạng lưới IP, Device Hash & Tọa độ GeoIP...
+                    <div class="card-title">{row["customer_name"]} – {row["app_id"]}</div>
+                    <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.8rem;">
+                        <b>Đánh giá thuật toán:</b> Phân tích liên kết mạng lưới IP, Device Hash & Tọa độ GeoIP...
                     </div>
                     <div class="card-info">📍 CCCD: <b>{row["national_id"]}</b></div>
-                    <div class="card-info">🌐 Địa chỉ IP: <b>{row["ip_address"]}</b></div>
+                    <div class="card-info">🌐 IP: <b>{row["ip_address"]}</b></div>
                     <div class="card-info">📐 Device Hash: <b>{row["device_hash"]}</b></div>
-                    <div class="card-info">🚨 Risk Score: <b>{row["risk_score"]}%</b></div>
-                    <div class="card-footer-custom" style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                    <div class="card-info">🚨 Risk Score: <b style="color:{status_color};">{row["risk_score"]}%</b></div>
+                    <div style="margin-top:12px; display:flex; justify-content:space-between; align-items:center;">
                         <div class="price-tag">{row["loan_amount"]:,.0f} VNĐ</div>
                     </div>
                 </div>
@@ -493,16 +523,16 @@ if st.session_state.active_tab == "Overview":
                 st.session_state.active_tab = "Network Graph"
                 st.rerun()
 
-    st.markdown("<br><hr><br>", unsafe_allow_html=True)
+    st.markdown("<br><hr style='border-color:rgba(255,255,255,0.1);'><br>", unsafe_allow_html=True)
     
     col_graph, col_info = st.columns([1.8, 1.2])
     with col_graph:
-        st.markdown("##### 🕸️ Mạng Lưới Đồ Thị Liên Kết Đơn Vay")
-        graph_html = render_pyvis_graph(G, highlight_node=selected_app, height="430px")
-        components.html(graph_html, height=450)
+        st.markdown("### 🕸️ Mạng Lưới Đồ Thị Liên Kết Đơn Vay")
+        graph_html = render_pyvis_graph(G, highlight_node=selected_app, height="450px")
+        components.html(graph_html, height=470)
 
     with col_info:
-        st.markdown(f"##### 🎯 Chi Tiết Hồ Sơ Đang Chọn: `{selected_app}`")
+        st.markdown(f"### 🎯 Chi Tiết Hồ Sơ: `{selected_app}`")
         if selected_app in G.nodes:
             app_info = df_apps[df_apps["app_id"] == selected_app].iloc[0]
             is_bad = (app_info["decision"] == "REJECTED")
@@ -517,9 +547,8 @@ if st.session_state.active_tab == "Overview":
 elif st.session_state.active_tab == "Network Graph":
     st.markdown('''
     <div class="section-title-box">
-        <div class="section-subtitle">//</div>
         <div class="section-main-title">ĐỒ THỊ MẠNG LƯỚI INTERACTIVE</div>
-        <div class="section-desc">Kéo thả các Node, cuộn chuột để Zoom in/out hoặc di chuột vào các Node để xem thuộc tính liên kết giữa các tài khoản vay</div>
+        <div class="section-desc">Kéo thả các Node, cuộn chuột để Zoom in/out hoặc di chuột vào các Node để xem thuộc tính liên kết</div>
     </div>
     ''', unsafe_allow_html=True)
     
@@ -529,7 +558,6 @@ elif st.session_state.active_tab == "Network Graph":
 elif st.session_state.active_tab == "Analytics AI":
     st.markdown('''
     <div class="section-title-box">
-        <div class="section-subtitle">//</div>
         <div class="section-main-title">ANALYTICS AI & QUẢN LÝ DỮ LIỆU</div>
         <div class="section-desc">Hệ thống tổng hợp chỉ số rủi ro, bộ lọc dữ liệu thông minh và xuất báo cáo CSV</div>
     </div>
@@ -547,7 +575,7 @@ elif st.session_state.active_tab == "Analytics AI":
     m4.metric("Tỷ Lệ Rủi Ro (Fraud Rate)", f"{fraud_rate:.1f}%")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("##### 🔍 Bộ Lọc & Tìm Kiếm Dữ Liệu Hồ Sơ")
+    st.markdown("### 🔍 Bộ Lọc & Tìm Kiếm Dữ Liệu Hồ Sơ")
     
     flt1, flt2, flt3 = st.columns([1.5, 1, 1])
     search_q = flt1.text_input("🔎 Tìm theo Tên hoặc Mã đơn:", "")
@@ -569,7 +597,6 @@ elif st.session_state.active_tab == "Analytics AI":
 elif st.session_state.active_tab == "GeoIP Map":
     st.markdown('''
     <div class="section-title-box">
-        <div class="section-subtitle">//</div>
         <div class="section-main-title">BẢN ĐỒ VỊ TRÍ REALTIME GEOIP</div>
         <div class="section-desc">Theo dõi tọa độ thực tế của khách hàng vay, phát hiện VPN/Proxy che giấu vị trí địa lý</div>
     </div>
@@ -607,7 +634,6 @@ elif st.session_state.active_tab == "GeoIP Map":
 elif st.session_state.active_tab == "Rules Engine":
     st.markdown('''
     <div class="section-title-box">
-        <div class="section-subtitle">//</div>
         <div class="section-main-title">MÔ HÌNH & RULES CẤU HÌNH AI ENGINE</div>
         <div class="section-desc">Thay đổi trọng số rủi ro trực tiếp trên giao diện và áp dụng tức thời vào thuật toán chấm điểm</div>
     </div>
@@ -634,7 +660,7 @@ elif st.session_state.active_tab == "Rules Engine":
     st.success(f"✅ **Cấu hình hiện tại:** Đơn vay sẽ bị TỪ CHỐI nếu Điểm Rủi Ro >= **{st.session_state.risk_threshold}%**.")
 
 # ==============================================================================
-# 8. SECTION FOOTER "VÌ SAO BẠN CHỌN NEXUS AI?"
+# 8. FOOTER "VÌ SAO BẠN CHỌN NEXUS AI?"
 # ==============================================================================
 st.markdown('''
 <div class="why-section">
