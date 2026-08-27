@@ -423,7 +423,7 @@ G, df_apps = fetch_data()
 # 3. SIDEBAR CONTROLS
 # ==============================================================================
 st.sidebar.title("🤖 AI Risk Platform")
-app_list = [n for n, d in G.nodes(data=True) if d.get("type"] == "Application"]
+app_list = [n for n, d in G.nodes(data=True) if d.get["type"] == "Application"]
 selected_app = st.sidebar.selectbox("📋 Chọn Hồ Sơ Xem Chi Tiết:", app_list if app_list else ["N/A"])
 
 # ==============================================================================
