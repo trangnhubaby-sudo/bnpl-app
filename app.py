@@ -272,20 +272,39 @@ with st.sidebar.form("new_loan_application_form"):
     in_amount = st.number_input("Khoản Vay Yêu Cầu (VNĐ):", value=20000000, step=1000000)
     
     # 🌟 ĐÔI THÀNH DẠNG TỰ ĐIỀN NGUYÊN BẢN (Text Input)
+# --- ĐOẠN CODE MỚI: TỰ ĐỘNG LẤY IP THỰC TẾ CỦA NGƯỜI TRUY CẬP WEB ---
+from streamlit_javascript import st_javascript
+
+# Tự động gọi API lấy IP thực của thiết bị đang mở web
+user_real_ip = st_javascript("await fetch('https://api.ipify.org').then(r => r.text())")
+
+# Nếu chưa lấy xong IP (hoặc bị chặn), mặc định dùng IP mẫu
+if not user_real_ip:
+    user_real_ip = "104.28.19.14"
+# ---------------------------------------------------------------------
+
+# Form nhập liệu hiện tại của bạn:
+with st.sidebar.form("new_loan_application_form"):
+    st.markdown("<small style='color:#64748b;'>Tự động thu thập Device Fingerprint & GeoIP</small>", unsafe_allow_html=True)
+    
+    in_name = st.text_input("Họ và Tên Khách Hàng:", value="Hoàng Trọng Kiên")
+    in_cccd = st.text_input("Số CCCD/CMND:", value="012095006789")
+    in_amount = st.number_input("Khoản Vay Yêu Cầu (VNĐ):", value=20000000, step=1000000)
+    
+    # 🌟 CẬP NHẬT: Gán `value=str(user_real_ip)` để ô IP tự nhảy IP thật của người dùng
     in_ip_address = st.text_input(
         "IP Khách Hàng Truy Cập:", 
-        value="104.28.19.14",
-        placeholder="Nhập địa chỉ IP tự do..."
+        value=str(user_real_ip),
+        placeholder="Nhập hoặc tự động lấy IP..."
     )
     
     in_device_input = st.text_input(
         "Môi Trường & Thiết Bị:", 
         value="FP-CC44B109",
-        placeholder="Nhập mã thiết bị hoặc User-Agent..."
+        placeholder="Nhập mã thiết bị..."
     )
     
     in_vpn = st.checkbox("Phát hiện VPN/Proxy", value=False)
-
     btn_submit = st.form_submit_button("🚀 Gửi Đơn Vay & Chấm Điểm AI")
 
     if btn_submit:
@@ -488,3 +507,4 @@ with tab_map:
 with tab_database:
     st.markdown("##### 📋 CSDL Tín Dụng Đồng Bộ Trong Hệ Thống")
     st.dataframe(df_apps, use_container_width=True, hide_index=True)
+    

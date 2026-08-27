@@ -5,3 +5,4 @@ pyvis
 folium
 streamlit-folium
 streamlit-autorefresh
+streamlit-javascript
