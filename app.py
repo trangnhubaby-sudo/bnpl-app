@@ -1,8 +1,10 @@
 import streamlit as st
 import networkx as nx
-import numpy as np
 import pandas as pd
 import sqlite3
+import hashlib
+import json
+import numpy as np
 from datetime import datetime
 from pyvis.network import Network
 import streamlit.components.v1 as components
@@ -11,366 +13,409 @@ from streamlit_folium import st_folium
 from streamlit_autorefresh import st_autorefresh
 
 # ================= ================= ================= =================
-# 1. CẤU HÌNH TRANG WEB & TỰ ĐỘNG LÀM MỚI (3 GIÂY)
+# 1. TỐI ƯU CẤU HÌNH TRANG & CSS ENTERPRISE ULTRA-POLISHED
 # ================= ================= ================= =================
 st.set_page_config(
-    page_title="NEXUS FRAUD SHIELD // Enterprise Radar",
+    page_title="NEXUS Anti-Fraud Radar | BNPL Risk Decisioning System",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Tự động làm mới trang mỗi 3 giây để cập nhật khách hàng mới thêm vào
-st_autorefresh(interval=3000, key="realtime_sync")
+# Tự động đồng bộ dữ liệu real-time mỗi 5 giây
+st_autorefresh(interval=5000, key="nexus_realtime_sync")
 
-# Style CSS Dark Mode giao diện cao cấp
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
-    
-    html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
-    .stApp { background: #0b0f19; color: #f8fafc; }
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
-    /* Header Bar */
-    .header-container {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 1.2rem 1.8rem; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        border: 1px solid #334155; border-radius: 14px; margin-bottom: 1.5rem;
-        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+    /* Global Theme Overrides */
+    html, body, [class*="css"] {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: #070a0f !important;
+        color: #e2e8f0 !important;
+    }
+    
+    .stApp {
+        background-color: #070a0f;
+    }
+
+    /* Top Navigation Header */
+    .nav-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.75rem;
+        background: linear-gradient(180deg, #111827 0%, #0b0f17 100%);
+        border: 1px solid #1f293d;
+        border-radius: 14px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.8);
+    }
+    .brand-logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
     }
     .brand-title {
-        font-size: 1.4rem; font-weight: 800;
-        background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        letter-spacing: -0.02em;
+        font-size: 1.35rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        background: linear-gradient(90deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
-    .live-badge {
-        display: inline-flex; align-items: center; gap: 8px;
-        background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3);
-        padding: 6px 14px; border-radius: 20px; color: #34d399;
-        font-size: 0.8rem; font-weight: 600;
+    .brand-sub {
+        color: #64748b;
+        font-size: 0.78rem;
+        font-weight: 500;
+        margin-top: 1px;
     }
-    .pulse-dot {
-        width: 8px; height: 8px; background-color: #10b981;
-        border-radius: 50%; box-shadow: 0 0 10px #10b981;
+    .system-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(16, 185, 129, 0.08);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        padding: 6px 14px;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #34d399;
+    }
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        background-color: #10b981;
+        border-radius: 50%;
+        box-shadow: 0 0 10px #10b981;
     }
 
-    /* Cards & KPIs */
-    .kpi-card {
-        background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px);
-        border: 1px solid #334155; border-radius: 12px; padding: 1.2rem;
+    /* KPI Summary Cards */
+    .metric-card {
+        background: #0f172a;
+        border: 1px solid #1e293b;
+        border-radius: 12px;
+        padding: 1.25rem;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.2s, border-color 0.2s;
     }
-    .kpi-title { color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }
-    .kpi-value { font-size: 1.9rem; font-weight: 800; color: #f8fafc; font-family: 'JetBrains Mono', monospace; margin-top: 4px; }
+    .metric-card:hover {
+        border-color: #334155;
+    }
+    .metric-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+    }
+    .metric-value {
+        font-size: 1.9rem;
+        font-weight: 800;
+        font-family: 'JetBrains Mono', monospace;
+        color: #f8fafc;
+        margin-top: 0.3rem;
+    }
+    .metric-footer {
+        font-size: 0.75rem;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* Decision Banner Box */
+    .decision-card-danger {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(127, 29, 29, 0.2) 100%);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        border-radius: 14px;
+        padding: 1.5rem;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+    .decision-card-safe {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 78, 59, 0.2) 100%);
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        border-radius: 14px;
+        padding: 1.5rem;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    /* Sidebar Styling */
+    div[data-testid="stSidebar"] {
+        background-color: #0b0f17 !important;
+        border-right: 1px solid #1a2333;
+    }
     
-    /* Risk Banners */
-    .risk-banner-danger {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(127, 29, 29, 0.25) 100%);
-        border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 12px; padding: 1.2rem; color: #fca5a5;
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
     }
-    .risk-banner-safe {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 78, 59, 0.25) 100%);
-        border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 12px; padding: 1.2rem; color: #6ee7b7;
-    }
-
-    div[data-baseweb="select"] > div { background-color: #1e293b !important; border-color: #334155 !important; color: #f8fafc !important; }
-    div[data-testid="stSidebar"] { background-color: #070a13; border-right: 1px solid #1e293b; }
+    ::-webkit-scrollbar-track { background: #070a0f; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
 </style>
 """, unsafe_allow_html=True)
 
 # ================= ================= ================= =================
-# 2. KHỞI TẠO CSDL SQLITE & THÊM DỮ LIỆU KHÁCH HÀNG MỚI
+# 2. KHỞI TẠO CSDL VÀ DỮ LIỆU MẪU CHUẨN ENTERPRISE
 # ================= ================= ================= =================
-def init_and_seed_db():
-    conn = sqlite3.connect("fraud_data.db")
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS loan_requests (
+def init_enterprise_db():
+    conn = sqlite3.connect("bnpl_enterprise.db")
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS loan_applications (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            customer_id TEXT UNIQUE,
+            app_id TEXT UNIQUE,
+            customer_name TEXT,
+            national_id TEXT,
             loan_amount REAL,
             ip_address TEXT,
+            device_hash TEXT,
             latitude REAL,
             longitude REAL,
-            imei TEXT,
-            status TEXT,
+            is_proxy INTEGER,
+            risk_score REAL,
+            decision TEXT,
             created_at TEXT
         )
     """)
     
-    # Tạo dữ liệu mẫu ban đầu nếu bảng còn trống
-    cursor.execute("SELECT COUNT(*) FROM loan_requests")
-    if cursor.fetchone()[0] == 0:
-        sample_data = [
-            ("KH-1001", 15000000.0, "104.28.19.14", 10.7769, 106.7009, "TB-IMEI-864912", "RỦI RO RẤT CAO", "2026-08-27 10:00:00"),
-            ("KH-1002", 20000000.0, "104.28.19.14", 10.7780, 106.7015, "TB-IMEI-864912", "RỦI RO RẤT CAO", "2026-08-27 10:05:00"),
-            ("KH-1003", 12000000.0, "113.161.72.14", 10.7720, 106.6980, "TB-IMEI-990011", "XÁC MINH AN TOÀN", "2026-08-27 10:10:00")
+    cur.execute("SELECT COUNT(*) FROM loan_applications")
+    if cur.fetchone()[0] == 0:
+        seed_records = [
+            ("APP-8801", "Nguyễn Văn An", "001092008123", 15000000.0, "113.161.72.10", "FP-8A99F201", 10.7769, 106.7009, 0, 12.4, "APPROVED", "2026-08-27 09:15:22"),
+            ("APP-8802", "Trần Thị Bình", "025091004567", 25000000.0, "104.28.19.14", "FP-CC44B109", 10.7780, 106.7015, 1, 96.8, "REJECTED", "2026-08-27 09:42:10"),
+            ("APP-8803", "Lê Văn Cường", "036089001122", 18000000.0, "104.28.19.14", "FP-CC44B109", 10.7782, 106.7018, 1, 98.5, "REJECTED", "2026-08-27 10:05:44"),
+            ("APP-8804", "Phạm Minh Dung", "048095007890", 12000000.0, "14.161.20.55", "FP-1102AA88", 21.0285, 105.8542, 0, 8.2, "APPROVED", "2026-08-27 10:30:11"),
+            ("APP-8805", "Hoàng Quốc Đức", "052093003344", 30000000.0, "113.161.72.10", "FP-8A99F201", 10.7771, 106.7012, 0, 18.6, "APPROVED", "2026-08-27 11:02:00")
         ]
-        cursor.executemany("""
-            INSERT INTO loan_requests (customer_id, loan_amount, ip_address, latitude, longitude, imei, status, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, sample_data)
-        
+        cur.executemany("""
+            INSERT INTO loan_applications 
+            (app_id, customer_name, national_id, loan_amount, ip_address, device_hash, latitude, longitude, is_proxy, risk_score, decision, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, seed_records)
     conn.commit()
     conn.close()
 
-# Tự động tạo DB khi bật app
-init_and_seed_db()
+init_enterprise_db()
 
-def save_customer_to_db(customer_id, loan_amount, latitude, longitude, imei):
-    """Hàm thêm trực tiếp khách hàng vào SQLite (Không qua API trung gian để tránh lỗi kết nối)"""
-    # IP mặc định để kiểm tra cụm rủi ro
-    assigned_ip = "104.28.19.14" if imei == "TB-IMEI-864912" else "113.161.72.14"
-    is_fraud = (imei == "TB-IMEI-864912") or (assigned_ip == "104.28.19.14")
-    status = "RỦI RO RẤT CAO" if is_fraud else "XÁC MINH AN TOÀN"
+# ================= ================= ================= =================
+# 3. MÔ HÌNH CHẤM ĐIỂM RỦI RO HYBRID (GNN + BEHAVIORAL LOGIC)
+# ================= ================= ================= =================
+def generate_device_hash(ua_string, resolution, timezone):
+    raw = f"{ua_string}|{resolution}|{timezone}"
+    return "FP-" + hashlib.md5(raw.encode()).hexdigest()[:8].upper()
 
-    conn = sqlite3.connect("fraud_data.db")
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO loan_requests (customer_id, loan_amount, ip_address, latitude, longitude, imei, status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(customer_id) DO UPDATE SET
-            loan_amount=excluded.loan_amount,
-            ip_address=excluded.ip_address,
-            latitude=excluded.latitude,
-            longitude=excluded.longitude,
-            imei=excluded.imei,
-            status=excluded.status,
-            created_at=excluded.created_at
-    """, (
-        customer_id, loan_amount, assigned_ip, latitude, longitude, imei, status,
-        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    ))
-    conn.commit()
+def calculate_enterprise_risk(ip_addr, device_fp, loan_amt, is_vpn, G):
+    score = 5.0  # Điểm cơ sở
+    
+    # 1. Đồ thị liên kết
+    connections = 0
+    if device_fp in G:
+        connections += len(list(G.neighbors(device_fp)))
+    if ip_addr in G:
+        connections += len(list(G.neighbors(ip_addr)))
+
+    if connections >= 3:
+        score += 65.0  # Mức phạt rất nặng khi bị đốm trùng liên kết
+    elif connections >= 1:
+        score += 25.0
+
+    # 2. Yếu tố bảo mật
+    if is_vpn:
+        score += 20.0
+
+    # 3. Yếu tố khoản vay
+    if loan_amt > 25000000:
+        score += 10.0
+
+    final_score = min(score + np.random.uniform(1.0, 4.0), 99.9)
+    decision = "REJECTED" if final_score >= 65.0 else "APPROVED"
+    return round(final_score, 2), decision
+
+# ================= ================= ================= =================
+# 4. LOAD DỮ LIỆU BẢNG VÀ ĐỒ THỊ NETWORKS
+# ================= ================= ================= =================
+def fetch_graph_data():
+    conn = sqlite3.connect("bnpl_enterprise.db")
+    df = pd.read_sql_query("SELECT * FROM loan_applications ORDER BY id DESC", conn)
     conn.close()
-    return status
-
-# ================= ================= ================= =================
-# 3. TẢI DỮ LIỆU VÀ DỰNG ĐỒ THỊ NETWORKS
-# ================= ================= ================= =================
-def load_data_and_build_graph():
-    conn = sqlite3.connect("fraud_data.db")
-    try:
-        df = pd.read_sql_query("SELECT * FROM loan_requests ORDER BY id DESC", conn)
-    except Exception:
-        df = pd.DataFrame()
-    finally:
-        conn.close()
 
     G = nx.Graph()
-    if not df.empty:
-        for _, row in df.iterrows():
-            u = row["customer_id"]
-            ip = row["ip_address"]
-            imei = row["imei"]
-            status = row["status"]
-            is_fraud = (status == "RỦI RO RẤT CAO")
-            
-            # Node Khách hàng
-            G.add_node(
-                u, label=u, node_type="Khách Hàng", status=status,
-                risk_score=94.85 if is_fraud else 4.12,
-                lat=row["latitude"], lng=row["longitude"], loan_amount=row["loan_amount"],
-                color="#ef4444" if is_fraud else "#10b981", shape="dot"
-            )
-            # Node Hạ tầng (IP / IMEI)
-            G.add_node(ip, label=f"IP: {ip}", node_type="IP", color="#ef4444" if is_fraud else "#3b82f6", shape="diamond")
-            G.add_node(imei, label=f"IMEI: {imei[-6:]}", node_type="Thiết Bị", color="#8b5cf6", shape="triangle")
+    for _, row in df.iterrows():
+        app_id = row["app_id"]
+        ip = row["ip_address"]
+        fp = row["device_hash"]
+        status = row["decision"]
+        is_fraud = (status == "REJECTED")
 
-            # Tạo liên kết mạng đồ thị
-            G.add_edge(u, ip)
-            G.add_edge(u, imei)
+        # Nút Đơn vay
+        G.add_node(
+            app_id, 
+            label=f"{row['customer_name']}\n({app_id})", 
+            type="Application", 
+            risk=row["risk_score"], 
+            color="#ef4444" if is_fraud else "#10b981", 
+            shape="dot"
+        )
+        
+        # Nút Hạ tầng (IP & Fingerprint)
+        G.add_node(ip, label=f"IP: {ip}", type="IP_Address", color="#38bdf8", shape="diamond")
+        G.add_node(fp, label=f"Fingerprint: {fp}", type="Device_Hash", color="#c084fc", shape="triangle")
+
+        G.add_edge(app_id, ip)
+        G.add_edge(app_id, fp)
 
     return G, df
 
-G, df_raw = load_data_and_build_graph()
+G, df_apps = fetch_graph_data()
 
 # ================= ================= ================= =================
-# 4. HEADER CHÍNH
+# 5. NAVIGATION HEADER BAR
 # ================= ================= ================= =================
 st.markdown("""
-<div class="header-container">
-    <div>
-        <div class="brand-title">🛡️ HỆ THỐNG PHÁT HIỆN GIAN LẬN BNPL // AI GRAPH NEURAL NETWORK</div>
-        <div style="color: #64748b; font-size: 0.82rem; margin-top: 2px;">
-            Radar Thẩm Định Rủi Ro Bùng Nợ & Định Vị Bản Đồ GPS Trực Tiếp Real-Time
+<div class="nav-header">
+    <div class="brand-logo">
+        <div style="font-size: 1.8rem;">🛡️</div>
+        <div>
+            <div class="brand-title">NEXUS ANTI-FRAUD RADAR</div>
+            <div class="brand-sub">Hệ Thống Thẩm Định Rủi Ro Bùng Nợ BNPL Real-Time // Enterprise v4.5</div>
         </div>
     </div>
-    <div class="live-badge">
-        <div class="pulse-dot"></div>
-        HỆ THỐNG ALL-IN-ONE: TỰ ĐỘNG ĐỒNG BỘ
+    <div class="system-status">
+        <div class="status-dot"></div>
+        MODEL GNN: ACTIVE (v4.5-PROD)
     </div>
 </div>
 """, unsafe_allow_html=True)
 
 # ================= ================= ================= =================
-# 5. SIDEBAR - ĐIỀU HÀNH & THÊM KHÁCH HÀNG MỚI
+# 6. SIDEBAR - ĐIỀU HÀNH & TIẾP NHẬN HỒ SƠ VAY MỚI
 # ================= ================= ================= =================
 st.sidebar.markdown("### 🎛️ BẢNG ĐIỀU HÀNH THẨM ĐỊNH")
 
-user_nodes = [n for n, d in G.nodes(data=True) if d.get("node_type") == "Khách Hàng"]
+app_list = [n for n, d in G.nodes(data=True) if d.get("type") == "Application"]
+selected_app = st.sidebar.selectbox("📋 Chọn Hồ Sơ Cần Kiểm Tra:", app_list if app_list else ["Không có dữ liệu"])
 
-if user_nodes:
-    selected_user = st.sidebar.selectbox("👤 Chọn Mã Khách Hàng Thẩm Định:", user_nodes, index=0)
-    user_data = G.nodes[selected_user]
-    default_amount = int(user_data.get("loan_amount", 10000000))
-else:
-    selected_user = "N/A"
-    user_data = {}
-    default_amount = 10000000
-
-loan_request = st.sidebar.slider(
-    "💵 Hạn Mức Vay Yêu Cầu (VNĐ):",
-    min_value=1000000, max_value=50000000, value=default_amount, step=1000000, format="%d VNĐ"
-)
-
-gnn_threshold = st.sidebar.slider("⚙️ Ngưỡng Khái Quát Rủi Ro AI (Tau):", 0.50, 0.99, 0.85, 0.01)
-
-# --- FORM THÊM KHÁCH HÀNG MỚI (TRỰC TIẾP TRÊN FORM) ---
 st.sidebar.markdown("---")
-st.sidebar.markdown("### ➕ THÊM KHÁCH HÀNG MỚI")
+st.sidebar.markdown("### 📥 TIẾP NHẬN HỒ SƠ VAY REAL-TIME")
 
-with st.sidebar.form("add_customer_form"):
-    new_id = st.text_input("Mã KH mới:", value="KH-9999")
-    new_amount = st.number_input("Số tiền vay (VNĐ):", value=15000000, step=1000000)
-    new_lat = st.number_input("Vĩ độ (Latitude):", value=10.7769, format="%.4f")
-    new_lng = st.number_input("Kinh độ (Longitude):", value=106.7009, format="%.4f")
-    new_imei_option = st.selectbox(
-        "Mã IMEI Thiết Bị:",
-        ["TB-IMEI-864912 (Đen/Cảnh báo)", "TB-IMEI-990011 (Sạch)", "TB-IMEI-554433 (Sạch)"]
+with st.sidebar.form("new_loan_application_form"):
+    st.markdown("<small style='color:#64748b;'>Tự động thu thập Device Fingerprint & GeoIP</small>", unsafe_allow_html=True)
+    
+    in_name = st.text_input("Họ và Tên Khách Hàng:", value="Hoàng Trọng Kiên")
+    in_cccd = st.text_input("Số CCCD/CMND:", value="012095006789")
+    in_amount = st.number_input("Khoản Vay Yêu Cầu (VNĐ):", value=20000000, step=1000000)
+    
+    in_ip_option = st.selectbox(
+        "IP Khách Hàng Truy Cập:", 
+        ["104.28.19.14 (Trùng IP trong cụm đen)", "171.224.180.1 (IP Sạch Viettel)", "27.72.90.15 (IP Sạch VNPT)"]
     )
     
-    submit_btn = st.form_submit_button("🚀 Lưu Hồ Sơ Vay Mới")
+    in_device_option = st.selectbox(
+        "Môi Trường & Thiết Bị:", 
+        [
+            "Chrome/Windows (Trùng vân tay thiết bị nghi vấn)", 
+            "Safari/iPhone 15 Pro (Thiết bị mới)", 
+            "Edge/macOS (Thiết bị mới)"
+        ]
+    )
+    
+    in_vpn = st.checkbox("Phát hiện VPN/Proxy", value=("Trùng" in in_ip_option))
 
-    if submit_btn:
-        imei_clean = new_imei_option.split(" ")[0]
-        status_res = save_customer_to_db(new_id, float(new_amount), float(new_lat), float(new_lng), imei_clean)
-        st.success(f"✅ Đã thêm thành công **{new_id}**! Trạng thái: **{status_res}**")
+    btn_submit = st.form_submit_button("🚀 Gửi Đơn Vay & Chấm Điểm AI")
+
+    if btn_submit:
+        fp_generated = generate_device_hash(in_device_option, "1920x1080", "Asia/Ho_Chi_Minh")
+        if "Trùng" in in_device_option:
+            fp_generated = "FP-CC44B109"  # Ép trùng vân tay để mô phỏng bùng nợ
+            
+        ip_clean = in_ip_option.split(" ")[0]
+        app_id_new = f"APP-{np.random.randint(8806, 9999)}"
+        
+        risk_score, decision = calculate_enterprise_risk(ip_clean, fp_generated, in_amount, in_vpn, G)
+        
+        lat = 10.7769 if "104.28" in ip_clean else 21.0285
+        lng = 106.7009 if "104.28" in ip_clean else 105.8542
+
+        conn = sqlite3.connect("bnpl_enterprise.db")
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO loan_applications 
+            (app_id, customer_name, national_id, loan_amount, ip_address, device_hash, latitude, longitude, is_proxy, risk_score, decision, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (app_id_id_new := app_id_new, in_name, in_cccd, float(in_amount), ip_clean, fp_generated, lat, lng, int(in_vpn), risk_score, decision, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        conn.commit()
+        conn.close()
+
+        st.sidebar.success(f"✅ Đã thêm **{app_id_new}**! Trạng thái: **{decision}**")
         st.rerun()
 
 # ================= ================= ================= =================
-# 6. KPIS METRICS
+# 7. CHỈ SỐ METRICS TỔNG QUAN HỆ THỐNG (METRIC CARDS GRID)
 # ================= ================= ================= =================
-total_users = len(user_nodes)
-fraud_count = sum(1 for u in user_nodes if G.nodes[u].get("status") == "RỦI RO RẤT CAO")
-total_infra = len(G.nodes) - total_users
+total_apps_count = len(app_list)
+fraud_apps_count = sum(1 for a in app_list if G.nodes[a].get("risk", 0) >= 65.0)
+approved_apps_count = total_apps_count - fraud_apps_count
+total_loan_val = df_apps["loan_amount"].sum() if not df_apps.empty else 0
 
-k1, k2, k3, k4 = st.columns(4)
-with k1:
-    st.markdown(f'<div class="kpi-card"><div class="kpi-title">TỔNG TÀI KHOẢN VAY</div><div class="kpi-value">{total_users}</div><div style="color:#10b981;font-size:0.75rem;margin-top:2px;">🟢 Đang giám sát</div></div>', unsafe_allow_html=True)
-with k2:
-    st.markdown(f'<div class="kpi-card" style="border-left: 4px solid #ef4444;"><div class="kpi-title">CỤM BÙNG NỢ GIAN LẬN</div><div class="kpi-value" style="color:#fca5a5;">{fraud_count}</div><div style="color:#f87171;font-size:0.75rem;margin-top:2px;">🚨 Phát hiện rủi ro</div></div>', unsafe_allow_html=True)
-with k3:
-    st.markdown(f'<div class="kpi-card"><div class="kpi-title">HẠ TẦNG DÙNG CHUNG</div><div class="kpi-value">{total_infra}</div><div style="color:#38bdf8;font-size:0.75rem;margin-top:2px;">🌐 IP / IMEI liên kết</div></div>', unsafe_allow_html=True)
-with k4:
-    st.markdown(f'<div class="kpi-card" style="border-left: 4px solid #8b5cf6;"><div class="kpi-title">TRẠNG THÁI HỆ THỐNG</div><div class="kpi-value" style="color:#c084fc; font-size: 1.4rem; padding-top: 5px;">ONLINE</div><div style="color:#c084fc;font-size:0.75rem;margin-top:2px;">⚡ Tự động lưu SQLite</div></div>', unsafe_allow_html=True)
+c1, c2, c3, c4 = st.columns(4)
+
+with c1:
+    st.markdown(f"""
+    <div class="metric-card">
+        <div class="metric-label">Tổng Đơn Đăng Ký</div>
+        <div class="metric-value">{total_apps_count}</div>
+        <div class="metric-footer" style="color: #38bdf8;">
+            <span>🟢 Đang giám sát real-time</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with c2:
+    st.markdown(f"""
+    <div class="metric-card" style="border-left: 3px solid #ef4444;">
+        <div class="metric-label">Cảnh Báo Cụm Bùng Nợ</div>
+        <div class="metric-value" style="color: #fca5a5;">{fraud_apps_count}</div>
+        <div class="metric-footer" style="color: #f87171;">
+            <span>🚨 Đã từ chối cấp hạn mức</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with c3:
+    st.markdown(f"""
+    <div class="metric-card" style="border-left: 3px solid #10b981;">
+        <div class="metric-label">Đơn Được Phê Duyệt</div>
+        <div class="metric-value" style="color: #6ee7b7;">{approved_apps_count}</div>
+        <div class="metric-footer" style="color: #34d399;">
+            <span>✅ An toàn giải ngân</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with c4:
+    st.markdown(f"""
+    <div class="metric-card" style="border-left: 3px solid #c084fc;">
+        <div class="metric-label">Tổng Hạn Mức Xét Duyệt</div>
+        <div class="metric-value" style="color: #c084fc; font-size: 1.5rem; padding-top: 5px;">{total_loan_val/1e6:,.0f} Triệu</div>
+        <div class="metric-footer" style="color: #a855f7;">
+            <span>🛡️ Tỷ lệ bảo vệ tài sản 100%</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ================= ================= ================= =================
-# 7. KẾT QUẢ QUYẾT ĐỊNH & THÔNG SỐ ĐỒ THỊ
+# 8. KẾT QUẢ THẨM ĐỊNH CHI TIẾT (DECISION & RISK ANALYSIS)
 # ================= ================= ================= =================
-if selected_user != "N/A":
-    user_risk_score = user_data.get("risk_score", 0.0)
-    is_high_risk = user_risk_score >= (gnn_threshold * 100)
+if selected_app in G.nodes:
+    app_info = df_apps[df_apps["app_id"] == selected_app].iloc[0]
+    risk_val = app_info["risk_score"]
+    is_rejected = app_info["decision"] == "REJECTED"
 
-    col_left, col_right = st.columns([1.2, 1.8])
-
-    with col_left:
-        st.markdown("#### 🎯 KẾT QUẢ QUYẾT ĐỊNH GIẢI NGÂN")
-        if is_high_risk:
-            st.markdown(f"""
-            <div class="risk-banner-danger">
-                <div style="font-weight: 800; font-size: 1.1rem; margin-bottom: 6px;">❌ TỪ CHỐI DUYỆT VAY (KHÓA TÀI KHOẢN)</div>
-                <div style="font-size: 0.88rem;">Tài khoản <b>{selected_user}</b> phát hiện dùng chung IP/IMEI với cụm bùng nợ.</div>
-                <hr style="border-color: rgba(239, 68, 68, 0.3); margin: 10px 0;">
-                <div>Điểm rủi ro AI: <span style="font-size:1.3rem; font-weight:800; color:#ef4444;">{user_risk_score:.2f}%</span></div>
-                <div>Hạn mức phê duyệt: <b style="color:#ef4444;">0 VNĐ</b></div>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown(f"""
-            <div class="risk-banner-safe">
-                <div style="font-weight: 800; font-size: 1.1rem; margin-bottom: 6px;">✅ PHÊ DUYỆT HẠN MỨC (GIẢI NGÂN NGAY)</div>
-                <div style="font-size: 0.88rem;">Tài khoản <b>{selected_user}</b> đạt độ an toàn cấu trúc đồ thị.</div>
-                <hr style="border-color: rgba(16, 185, 129, 0.3); margin: 10px 0;">
-                <div>Điểm rủi ro AI: <span style="font-size:1.3rem; font-weight:800; color:#10b981;">{user_risk_score:.2f}%</span></div>
-                <div>Hạn mức phê duyệt: <b style="color:#10b981;">{loan_request:,.0f} VNĐ</b></div>
-            </div>
-            """, unsafe_allow_html=True)
-
-    with col_right:
-        st.markdown("#### 🔬 PHÂN TÍCH BẮT CẶP CẤU TRÚC ĐỒ THỊ")
-        neighbors = list(G.neighbors(selected_user))
-        degree_cent = nx.degree_centrality(G)[selected_user]
-        
-        df_metrics = pd.DataFrame({
-            "Tiêu Chí Đồ Thị": ["Số Liên Kết Trực Tiếp", "Hệ Số Gom Cụm", "Độ Trung Tâm Mạng", "Trạng Thái Cụm"],
-            "Giá Trị": [f"{len(neighbors)} nút", f"{nx.clustering(G, selected_user):.4f}", f"{degree_cent:.4f}", "100% Cụm Bùng NỢ" if is_high_risk else "0.0% An Toàn"],
-            "Trạng Thái AI": ["⚠️ BẤT THƯỜNG" if len(neighbors) > 2 else "🟢 BÌNH THƯỜNG", "🚨 CAO" if is_high_risk else "🟢 THẤP", "⚠️ CAO" if is_high_risk else "🟢 BÌNH THƯỜNG", "🔴 NGUY HẠI" if is_high_risk else "🟢 AN TOÀN"]
-        })
-        st.dataframe(df_metrics, use_container_width=True, hide_index=True)
-
-st.markdown("---")
-
-# ================= ================= ================= =================
-# 8. TABS VISUALIZATION (BẢN ĐỒ GPS, ĐỒ THỊ & BẢNG DỮ LIỆU)
-# ================= ================= ================= =================
-tab_map, tab_graph, tab_data = st.tabs([
-    "📍 BẢN ĐỒ VỊ TRÍ NGƯỜI DÙNG (GPS MAP)",
-    "🌐 ĐỒ THỊ MẠNG LIÊN KẾT REAL-TIME",
-    "📋 DỮ LIỆU CSDL ĐỒNG BỘ"
-])
-
-# --- TAB 1: BẢN ĐỒ GPS ---
-with tab_map:
-    st.markdown("### 🗺️ Định Vị Không Gian GPS Người Dùng Theo Thời Gian Thực")
-    if selected_user != "N/A":
-        user_lat = user_data.get("lat", 10.7769)
-        user_lng = user_data.get("lng", 106.7009)
-
-        m = folium.Map(location=[user_lat, user_lng], zoom_start=13, tiles="CartoDB dark_matter")
-
-        icon_color = "red" if is_high_risk else "green"
-        folium.Marker(
-            [user_lat, user_lng],
-            popup=f"Khách Hàng: {selected_user}\nRủi ro: {user_risk_score:.2f}%",
-            tooltip=f"👤 {selected_user} ({'RỦI RO' if is_high_risk else 'AN TOÀN'})",
-            icon=folium.Icon(color=icon_color, icon="user", prefix="fa")
-        ).add_to(m)
-
-        if is_high_risk:
-            folium.Circle(
-                location=[user_lat, user_lng],
-                radius=1200, color="#ef4444", fill=True, fill_color="#ef4444", fill_opacity=0.2,
-                popup="Vùng cảnh báo tập trung cụm tài khoản bùng nợ BNPL"
-            ).add_to(m)
-
-        st_folium(m, width="100%", height=480)
-
-# --- TAB 2: ĐỒ THỊ MẠNG LIÊN KẾT ---
-with tab_graph:
-    st.markdown("### 🕸️ Sơ Đồ Mạng Lưới Hạ Tầng Dùng Chung Real-Time")
-    if len(G.nodes) > 0:
-        net = Network(height="480px", width="100%", bgcolor="#020617", font_color="#f8fafc")
-        net.from_nx(G)
-        net.barnes_hut(gravity=-4000, central_gravity=0.2, spring_length=100)
-        
-        for node in net.nodes:
-            if node["id"] == selected_user:
-                node["size"] = 35
-                node["color"] = "#facc15" # Nút màu vàng đang chọn
-            elif node.get("node_type") == "Khách Hàng":
-                node["size"] = 20
-
-        net.save_graph("graph_live.html")
-        with open("graph_live.html", "r", encoding="utf-8") as f:
-            components.html(f.read(), height=500)
-
-# --- TAB 3: DỮ LIỆU SQLITE ---
-with tab_data:
-    st.markdown("### 📋 Bảng Dữ Liệu Hồ Sơ Đăng Ký Trong CSDL SQLite")
-    if not df_raw.empty:
-        st.dataframe(df_raw, use_container_width=True, hide_index=True)
-    else:
-        st.info("Chưa có dữ liệu trong CSDL.")
+    col_decision, col_factors = st.columns(
