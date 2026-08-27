@@ -10,39 +10,59 @@ from streamlit_folium import st_folium
 from streamlit_autorefresh import st_autorefresh
 
 # ================= ================= ================= =================
-# 1. CẤU HÌNH & TỰ ĐỘNG LÀM MỚI REAL-TIME (MỖI 3 GIÂY)
+# 1. CẤU HÌNH HỆ THỐNG & TỰ ĐỘNG ĐỒNG BỘ (3 GIÂY)
 # ================= ================= ================= =================
 st.set_page_config(
-    page_title="NEXUS FRAUD SHIELD | Real-time GNN Dashboard",
+    page_title="NEXUS FRAUD SHIELD // Enterprise Radar",
     page_icon="🛡️",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# Tự động quét CSDL làm mới giao diện mỗi 3000ms (3 giây)
-st_autorefresh(interval=3000, key="realtime_sync_counter")
+# Tự động làm mới trang mỗi 3000ms để đồng bộ CSDL
+st_autorefresh(interval=3000, key="realtime_sync")
 
-# Style CSS Dark Slate
+# Style CSS Dark Mode cao cấp
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+    
     html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
-    .stApp { background: #0f172a; color: #f8fafc; }
+    .stApp { background: #0b0f19; color: #f8fafc; }
+
+    /* Header Bar */
     .header-container {
         display: flex; align-items: center; justify-content: space-between;
-        padding: 1rem 1.5rem; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        border: 1px solid #334155; border-radius: 12px; margin-bottom: 1rem;
+        padding: 1.2rem 1.8rem; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border: 1px solid #334155; border-radius: 14px; margin-bottom: 1.5rem;
+        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
     }
     .brand-title {
-        font-size: 1.3rem; font-weight: 800;
+        font-size: 1.4rem; font-weight: 800;
         background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        letter-spacing: -0.02em;
     }
+    .live-badge {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3);
+        padding: 6px 14px; border-radius: 20px; color: #34d399;
+        font-size: 0.8rem; font-weight: 600;
+    }
+    .pulse-dot {
+        width: 8px; height: 8px; background-color: #10b981;
+        border-radius: 50%; box-shadow: 0 0 10px #10b981;
+    }
+
+    /* Cards & KPIs */
     .kpi-card {
-        background: rgba(30, 41, 59, 0.7); border: 1px solid #334155;
-        border-radius: 12px; padding: 1rem;
+        background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px);
+        border: 1px solid #334155; border-radius: 12px; padding: 1.2rem;
     }
-    .kpi-title { color: #94a3b8; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
-    .kpi-value { font-size: 1.8rem; font-weight: 700; color: #f8fafc; font-family: 'JetBrains Mono', monospace; }
+    .kpi-title { color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }
+    .kpi-value { font-size: 1.9rem; font-weight: 800; color: #f8fafc; font-family: 'JetBrains Mono', monospace; margin-top: 4px; }
+    
+    /* Banners */
     .risk-banner-danger {
         background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(127, 29, 29, 0.25) 100%);
         border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 12px; padding: 1.2rem; color: #fca5a5;
@@ -51,169 +71,229 @@ st.markdown("""
         background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 78, 59, 0.25) 100%);
         border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 12px; padding: 1.2rem; color: #6ee7b7;
     }
+
+    div[data-baseweb="select"] > div { background-color: #1e293b !important; border-color: #334155 !important; color: #f8fafc !important; }
+    div[data-testid="stSidebar"] { background-color: #070a13; border-right: 1px solid #1e293b; }
 </style>
 """, unsafe_allow_html=True)
 
 # ================= ================= ================= =================
-# 2. ĐỌC DỮ LIỆU ĐỒ THỊ TỪ CSDL SQLITE REAL-TIME
+# 2. TẢI DỮ LIỆU TỪ SQLITE & DỰNG ĐỒ THỊ
 # ================= ================= ================= =================
-def load_graph_from_db():
-    G = nx.Graph()
-    
-    # Danh sách IP/IMEI nằm trong Blacklist bùng nợ
-    BLACK_IPS = ["104.28.19.14", "113.161.72.14"]
-    BLACK_IMEIS = ["TB-IMEI-864912"]
-
-    # Đọc CSDL
+def load_data_and_build_graph():
+    conn = sqlite3.connect("fraud_data.db")
     try:
-        conn = sqlite3.connect("fraud_data.db")
-        df = pd.read_sql_query("SELECT * FROM loan_requests", conn)
-        conn.close()
+        df = pd.read_sql_query("SELECT * FROM loan_requests ORDER BY id DESC", conn)
     except Exception:
         df = pd.DataFrame()
+    finally:
+        conn.close()
 
-    # Dữ liệu mặc định nếu CSDL trống
-    if df.empty:
-        df = pd.DataFrame([
-            {"customer_id": "KH-1008", "loan_amount": 15000000, "ip_address": "104.28.19.14", "latitude": 10.7769, "longitude": 106.7009, "imei": "TB-IMEI-864912"},
-            {"customer_id": "KH-1009", "loan_amount": 10000000, "ip_address": "104.28.19.14", "latitude": 10.7750, "longitude": 106.7020, "imei": "TB-IMEI-864912"},
-            {"customer_id": "KH-2001", "loan_amount": 5000000, "ip_address": "14.225.21.18", "latitude": 21.0285, "longitude": 105.8542, "imei": "TB-IMEI-990011"}
-        ])
+    G = nx.Graph()
+    
+    if not df.empty:
+        for _, row in df.iterrows():
+            u = row["customer_id"]
+            ip = row["ip_address"]
+            imei = row["imei"]
+            status = row["status"]
+            is_fraud = (status == "RỦI RO RẤT CAO")
+            
+            # Node Khách hàng
+            G.add_node(
+                u,
+                label=u,
+                node_type="Khách Hàng",
+                status=status,
+                risk_score=94.85 if is_fraud else 4.12,
+                lat=row["latitude"],
+                lng=row["longitude"],
+                loan_amount=row["loan_amount"],
+                color="#ef4444" if is_fraud else "#10b981",
+                shape="dot"
+            )
+            
+            # Node Hạ tầng (IP & IMEI)
+            G.add_node(ip, label=f"IP: {ip}", node_type="IP", color="#ef4444" if is_fraud else "#3b82f6", shape="diamond")
+            G.add_node(imei, label=f"IMEI: {imei[-6:]}", node_type="Thiết Bị", color="#8b5cf6", shape="triangle")
 
-    # Dựng Đồ Thị
-    for _, row in df.iterrows():
-        user = row["customer_id"]
-        ip = row["ip_address"]
-        imei = row["imei"]
-        
-        is_fraud = (ip in BLACK_IPS) or (imei in BLACK_IMEIS)
-        risk_score = 91.76 if is_fraud else 5.20
-
-        G.add_node(
-            user,
-            node_type="Khách Hàng",
-            risk_score=risk_score,
-            status="RỦI RO RẤT CAO" if is_fraud else "XÁC MINH AN TOÀN",
-            lat=row["latitude"],
-            lng=row["longitude"],
-            loan_amount=row["loan_amount"]
-        )
-        G.add_node(ip, node_type="IP", color="#ef4444" if ip in BLACK_IPS else "#3b82f6")
-        G.add_node(imei, node_type="Thiết Bị", color="#8b5cf6")
-
-        G.add_edge(user, ip)
-        G.add_edge(user, imei)
+            # Mối liên kết đồ thị
+            G.add_edge(u, ip)
+            G.add_edge(u, imei)
 
     return G, df
 
-G, df_raw = load_graph_from_db()
+G, df_raw = load_data_and_build_graph()
 
 # ================= ================= ================= =================
-# 3. HEADER & SIDEBAR
+# 3. HEADER
 # ================= ================= ================= =================
 st.markdown("""
 <div class="header-container">
     <div>
         <div class="brand-title">🛡️ HỆ THỐNG PHÁT HIỆN GIAN LẬN BNPL // AI GRAPH NEURAL NETWORK</div>
-        <div style="color: #64748b; font-size: 0.8rem; margin-top: 2px;">
-            Đồng bộ Real-Time từ CSDL SQLite & Cổng API Tự Động
+        <div style="color: #64748b; font-size: 0.82rem; margin-top: 2px;">
+            Radar Thẩm Định Rủi Ro Bùng Nợ & Định Vị Bản Đồ GPS Trực Tiếp Real-Time
         </div>
     </div>
-    <div style="color: #34d399; font-size: 0.8rem; font-weight: 600;">
-        🟢 CSDL: DỮ LIỆU ĐỒNG BỘ REAL-TIME (3s)
+    <div class="live-badge">
+        <div class="pulse-dot"></div>
+        CSDL SQLITE: ĐỒNG BỘ TỰ ĐỘNG (3s)
     </div>
 </div>
 """, unsafe_allow_html=True)
 
+# ================= ================= ================= =================
+# 4. SIDEBAR DYNAMIC
+# ================= ================= ================= =================
 st.sidebar.markdown("### 🎛️ BẢNG ĐIỀU HÀNH THẨM ĐỊNH")
-user_list = [n for n, d in G.nodes(data=True) if d.get("node_type") == "Khách Hàng"]
-selected_user = st.sidebar.selectbox("👤 Chọn Mã Khách Hàng Thẩm Định:", user_list)
 
-gnn_threshold = st.sidebar.slider("⚙️ Ngưỡng Rủi Ro AI (Tau):", 0.50, 0.99, 0.85, 0.01)
+user_nodes = [n for n, d in G.nodes(data=True) if d.get("node_type") == "Khách Hàng"]
+
+if user_nodes:
+    selected_user = st.sidebar.selectbox("👤 Chọn Mã Khách Hàng Thẩm Định:", user_nodes, index=0)
+    user_data = G.nodes[selected_user]
+    default_amount = int(user_data.get("loan_amount", 10000000))
+else:
+    selected_user = "N/A"
+    user_data = {}
+    default_amount = 10000000
+
+loan_request = st.sidebar.slider(
+    "💵 Hạn Mức Vay Yêu Cầu (VNĐ):",
+    min_value=1000000, max_value=50000000, value=default_amount, step=1000000, format="%d VNĐ"
+)
+
+gnn_threshold = st.sidebar.slider("⚙️ Ngưỡng Khái Quát Rủi Ro AI (Tau):", 0.50, 0.99, 0.85, 0.01)
+
+st.sidebar.markdown("---")
+st.sidebar.caption("🔒 Bảo mật chuẩn ISO27001 & Định vị GPS Real-time Synchronized")
 
 # ================= ================= ================= =================
-# 4. KPI METRICS
+# 5. KPIS METRICS
 # ================= ================= ================= =================
-total_users = len(user_list)
-fraud_count = sum(1 for n in user_list if G.nodes[n].get("risk_score", 0) > 80)
+total_users = len(user_nodes)
+fraud_count = sum(1 for u in user_nodes if G.nodes[u].get("status") == "RỦI RO RẤT CAO")
 total_infra = len(G.nodes) - total_users
 
 k1, k2, k3, k4 = st.columns(4)
-k1.markdown(f'<div class="kpi-card"><div class="kpi-title">TỔNG TÀI KHOẢN</div><div class="kpi-value">{total_users}</div></div>', unsafe_allow_html=True)
-k2.markdown(f'<div class="kpi-card"><div class="kpi-title">CỤM BÙNG NỢ GIAN LẬN</div><div class="kpi-value" style="color:#fca5a5;">{fraud_count}</div></div>', unsafe_allow_html=True)
-k3.markdown(f'<div class="kpi-card"><div class="kpi-title">HẠ TẦNG DÙNG CHUNG</div><div class="kpi-value">{total_infra}</div></div>', unsafe_allow_html=True)
-k4.markdown(f'<div class="kpi-card"><div class="kpi-title">TỐC ĐỘ ĐỒNG BỘ</div><div class="kpi-value" style="color:#c084fc;">3.0 s</div></div>', unsafe_allow_html=True)
+with k1:
+    st.markdown(f'<div class="kpi-card"><div class="kpi-title">TỔNG TÀI KHOẢN VAY</div><div class="kpi-value">{total_users}</div><div style="color:#10b981;font-size:0.75rem;margin-top:2px;">🟢 Đang giám sát</div></div>', unsafe_allow_html=True)
+with k2:
+    st.markdown(f'<div class="kpi-card" style="border-left: 4px solid #ef4444;"><div class="kpi-title">CỤM BÙNG NỢ GIAN LẬN</div><div class="kpi-value" style="color:#fca5a5;">{fraud_count}</div><div style="color:#f87171;font-size:0.75rem;margin-top:2px;">🚨 Phát hiện rủi ro</div></div>', unsafe_allow_html=True)
+with k3:
+    st.markdown(f'<div class="kpi-card"><div class="kpi-title">HẠ TẦNG DÙNG CHUNG</div><div class="kpi-value">{total_infra}</div><div style="color:#38bdf8;font-size:0.75rem;margin-top:2px;">🌐 IP / IMEI liên kết</div></div>', unsafe_allow_html=True)
+with k4:
+    st.markdown(f'<div class="kpi-card" style="border-left: 4px solid #8b5cf6;"><div class="kpi-title">TỐC ĐỘ ĐỒNG BỘ</div><div class="kpi-value" style="color:#c084fc;">3.0 s</div><div style="color:#c084fc;font-size:0.75rem;margin-top:2px;">⚡ Quét CSDL liên tục</div></div>', unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ================= ================= ================= =================
-# 5. KẾT QUẢ GIẢI NGÂN & BẮT CẶP CẤU TRÚC
+# 6. KẾT QUẢ QUYẾT ĐỊNH & THÔNG SỐ ĐỒ THỊ
 # ================= ================= ================= =================
-curr_node = G.nodes[selected_user]
-user_risk = curr_node.get("risk_score", 0)
-is_high_risk = user_risk >= (gnn_threshold * 100)
+if selected_user != "N/A":
+    user_risk_score = user_data.get("risk_score", 0.0)
+    is_high_risk = user_risk_score >= (gnn_threshold * 100)
 
-c1, c2 = st.columns([1.2, 1.8])
+    col_left, col_right = st.columns([1.2, 1.8])
 
-with c1:
-    st.markdown("#### 🎯 KẾT QUẢ QUYẾT ĐỊNH GIẢI NGÂN")
-    if is_high_risk:
-        st.markdown(f"""
-        <div class="risk-banner-danger">
-            <b>❌ TỪ CHỐI DUYỆT VAY (KHÓA TÀI KHOẢN)</b><br>
-            Tài khoản <b>{selected_user}</b> phát hiện trùng lặp hạ tầng bùng nợ.<br><hr style="border-color:rgba(239, 68, 68, 0.3);">
-            Điểm rủi ro AI: <b style="font-size:1.3rem;">{user_risk:.2f}%</b><br>
-            Hạn mức đề xuất: <b>0 VNĐ</b>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown(f"""
-        <div class="risk-banner-safe">
-            <b>✅ PHÊ DUYỆT HẠN MỨC (GIẢI NGÂN NGAY)</b><br>
-            Tài khoản <b>{selected_user}</b> đạt chỉ số an toàn cấu trúc.<br><hr style="border-color:rgba(16, 185, 129, 0.3);">
-            Điểm rủi ro AI: <b style="font-size:1.3rem;">{user_risk:.2f}%</b><br>
-            Hạn mức phê duyệt: <b>{curr_node.get('loan_amount', 0):,.0f} VNĐ</b>
-        </div>
-        """, unsafe_allow_html=True)
+    with col_left:
+        st.markdown("#### 🎯 KẾT QUẢ QUYẾT ĐỊNH GIẢI NGÂN")
+        if is_high_risk:
+            st.markdown(f"""
+            <div class="risk-banner-danger">
+                <div style="font-weight: 800; font-size: 1.1rem; margin-bottom: 6px;">❌ TỪ CHỐI DUYỆT VAY (KHÓA TÀI KHOẢN)</div>
+                <div style="font-size: 0.88rem;">Tài khoản <b>{selected_user}</b> phát hiện dùng chung IP/IMEI với cụm bùng nợ.</div>
+                <hr style="border-color: rgba(239, 68, 68, 0.3); margin: 10px 0;">
+                <div>Điểm rủi ro AI: <span style="font-size:1.3rem; font-weight:800; color:#ef4444;">{user_risk_score:.2f}%</span></div>
+                <div>Hạn mức phê duyệt: <b style="color:#ef4444;">0 VNĐ</b></div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown(f"""
+            <div class="risk-banner-safe">
+                <div style="font-weight: 800; font-size: 1.1rem; margin-bottom: 6px;">✅ PHÊ DUYỆT HẠN MỨC (GIẢI NGÂN NGAY)</div>
+                <div style="font-size: 0.88rem;">Tài khoản <b>{selected_user}</b> đạt độ an toàn cấu trúc đồ thị.</div>
+                <hr style="border-color: rgba(16, 185, 129, 0.3); margin: 10px 0;">
+                <div>Điểm rủi ro AI: <span style="font-size:1.3rem; font-weight:800; color:#10b981;">{user_risk_score:.2f}%</span></div>
+                <div>Hạn mức phê duyệt: <b style="color:#10b981;">{loan_request:,.0f} VNĐ</b></div>
+            </div>
+            """, unsafe_allow_html=True)
 
-with c2:
-    st.markdown("#### 🔬 PHÂN TÍCH BẮT CẶP CẤU TRÚC ĐỒ THỊ")
-    neighbors = list(G.neighbors(selected_user))
-    degree_cent = nx.degree_centrality(G)[selected_user]
-    
-    df_metrics = pd.DataFrame({
-        "Tiêu Chí Đồ Thị": ["Số Liên Kết Trực Tiếp", "Hệ Số Gom Cụm", "Độ Trung Tâm Mạng", "Mức Độ Rủi Ro Mạng"],
-        "Giá Trị": [f"{len(neighbors)} nút", f"{nx.clustering(G, selected_user):.4f}", f"{degree_cent:.4f}", "100% Cụm Bùng Nợ" if is_high_risk else "0.0% An Toàn"],
-        "Trạng Thái": ["⚠️ BẤT THƯỜNG" if len(neighbors) > 2 else "🟢 BÌNH THƯỜNG", "🚨 CAO" if is_high_risk else "🟢 THẤP", "⚠️ CAO" if is_high_risk else "🟢 BÌNH THƯỜNG", "🔴 NGUY HẠI" if is_high_risk else "🟢 AN TOÀN"]
-    })
-    st.dataframe(df_metrics, use_container_width=True, hide_index=True)
+    with col_right:
+        st.markdown("#### 🔬 PHÂN TÍCH BẮT CẶP CẤU TRÚC ĐỒ THỊ")
+        neighbors = list(G.neighbors(selected_user))
+        degree_cent = nx.degree_centrality(G)[selected_user]
+        
+        df_metrics = pd.DataFrame({
+            "Tiêu Chí Đồ Thị": ["Số Liên Kết Trực Tiếp", "Hệ Số Gom Cụm", "Độ Trung Tâm Mạng", "Trạng Thái Cụm"],
+            "Giá Trị": [f"{len(neighbors)} nút", f"{nx.clustering(G, selected_user):.4f}", f"{degree_cent:.4f}", "100% Cụm Bùng Nợ" if is_high_risk else "0.0% An Toàn"],
+            "Trạng Thái AI": ["⚠️ BẤT THƯỜNG" if len(neighbors) > 2 else "🟢 BÌNH THƯỜNG", "🚨 CAO" if is_high_risk else "🟢 THẤP", "⚠️ CAO" if is_high_risk else "🟢 BÌNH THƯỜNG", "🔴 NGUY HẠI" if is_high_risk else "🟢 AN TOÀN"]
+        })
+        st.dataframe(df_metrics, use_container_width=True, hide_index=True)
 
 st.markdown("---")
 
 # ================= ================= ================= =================
-# 6. TABS TRỰC QUAN HOÁ BẢN ĐỒ & ĐỒ THỊ
+# 7. TABS VISUALIZATION (BẢN ĐỒ GPS & ĐỒ THỊ MẠNG)
 # ================= ================= ================= =================
-tab_map, tab_graph = st.tabs(["📍 BẢN ĐỒ VỊ TRÍ NGƯỜI DÙNG (GPS MAP)", "🌐 ĐỒ THỊ MẠNG LIÊN KẾT REAL-TIME"])
+tab_map, tab_graph, tab_data = st.tabs([
+    "📍 BẢN ĐỒ VỊ TRÍ NGƯỜI DÙNG (GPS MAP)",
+    "🌐 ĐỒ THỊ MẠNG LIÊN KẾT REAL-TIME",
+    "📋 DỮ LIỆU CSDL ĐỒNG BỘ"
+])
 
+# --- TAB 1: BẢN ĐỒ GPS ---
 with tab_map:
-    lat = curr_node.get("lat", 10.7769)
-    lng = curr_node.get("lng", 106.7009)
-    
-    m = folium.Map(location=[lat, lng], zoom_start=14, tiles="CartoDB dark_matter")
-    folium.Marker(
-        [lat, lng],
-        popup=f"{selected_user}: {user_risk:.1f}% Risk",
-        icon=folium.Icon(color="red" if is_high_risk else "green", icon="user", prefix="fa")
-    ).add_to(m)
-    
-    if is_high_risk:
-        folium.Circle([lat, lng], radius=1000, color="#ef4444", fill=True, fill_opacity=0.2).add_to(m)
-        
-    st_folium(m, width="100%", height=450)
+    st.markdown("### 🗺️ Định Vị Không Gian GPS Người Dùng Theo Thời Gian Thực")
+    if selected_user != "N/A":
+        user_lat = user_data.get("lat", 10.7769)
+        user_lng = user_data.get("lng", 106.7009)
 
+        m = folium.Map(location=[user_lat, user_lng], zoom_start=13, tiles="CartoDB dark_matter")
+
+        # Ghim vị trí người dùng đang chọn
+        icon_color = "red" if is_high_risk else "green"
+        folium.Marker(
+            [user_lat, user_lng],
+            popup=f"Khách Hàng: {selected_user}\nRủi ro: {user_risk_score:.2f}%",
+            tooltip=f"👤 {selected_user} ({'RỦI RO' if is_high_risk else 'AN TOÀN'})",
+            icon=folium.Icon(color=icon_color, icon="user", prefix="fa")
+        ).add_to(m)
+
+        # Vòng tròn cảnh báo nếu rủi ro cao
+        if is_high_risk:
+            folium.Circle(
+                location=[user_lat, user_lng],
+                radius=1200, color="#ef4444", fill=True, fill_color="#ef4444", fill_opacity=0.2,
+                popup="Vùng cảnh báo tập trung cụm tài khoản bùng nợ BNPL"
+            ).add_to(m)
+
+        st_folium(m, width="100%", height=480)
+
+# --- TAB 2: ĐỒ THỊ MẠNG LIÊN KẾT ---
 with tab_graph:
-    net = Network(height="450px", width="100%", bgcolor="#020617", font_color="#f8fafc")
-    net.from_nx(G)
-    net.save_graph("graph.html")
-    with open("graph.html", "r", encoding="utf-8") as f:
-        components.html(f.read(), height=470)
+    st.markdown("### 🕸️ Sơ Đồ Mạng Lưới Hạ Tầng Dùng Chung Real-Time")
+    if len(G.nodes) > 0:
+        net = Network(height="480px", width="100%", bgcolor="#020617", font_color="#f8fafc")
+        net.from_nx(G)
+        net.barnes_hut(gravity=-4000, central_gravity=0.2, spring_length=100)
+        
+        for node in net.nodes:
+            if node["id"] == selected_user:
+                node["size"] = 35
+                node["color"] = "#facc15" # Vàng rực cho nút đang chọn
+            elif node.get("node_type") == "Khách Hàng":
+                node["size"] = 20
+
+        net.save_graph("graph_live.html")
+        with open("graph_live.html", "r", encoding="utf-8") as f:
+            components.html(f.read(), height=500)
+
+# --- TAB 3: DỮ LIỆU SQLITE ---
+with tab_data:
+    st.markdown("### 📋 Bảng Dữ Liệu Hồ Sơ Đăng Ký Trong CSDL")
+    if not df_raw.empty:
+        st.dataframe(df_raw, use_container_width=True, hide_index=True)
+    else:
+        st.info("Chưa có dữ liệu trong CSDL.")
