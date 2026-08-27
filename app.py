@@ -4,9 +4,11 @@ import numpy as np
 import pandas as pd
 from pyvis.network import Network
 import streamlit.components.v1 as components
+import folium
+from streamlit_folium import st_folium
 
 # ================= ================= ================= =================
-# 1. CẤU HÌNH HỆ THỐNG & GIAO DIỆN CHUẨN FINTECH ENTERPRISE
+# 1. CẤU HÌNH HỆ THỐNG & GIAO DIỆN FINTECH ENTERPRISE
 # ================= ================= ================= =================
 st.set_page_config(
     page_title="NEXUS FRAUD SHIELD | Radar AI Phát Hiện Gian Lận BNPL",
@@ -15,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Dark / Modern Slate Fintech Theme CSS
+# Style CSS Dark Slate
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
@@ -117,19 +119,6 @@ st.markdown("""
         color: #6ee7b7;
     }
 
-    /* Tech Badge Styling */
-    .tech-pill {
-        display: inline-block;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.75rem;
-        padding: 3px 8px;
-        border-radius: 6px;
-        background: #1e293b;
-        border: 1px solid #475569;
-        color: #cbd5e1;
-        margin-right: 4px;
-    }
-
     div[data-baseweb="select"] > div {
         background-color: #1e293b !important;
         border-color: #334155 !important;
@@ -155,18 +144,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ================= ================= ================= =================
-# 2. DANH MỤC ÁP ÁN ĐỊA LÝ -> SUY RA IP
-# ================= ================= ================= =================
-LOCATION_IP_MAP = {
-    "🇻🇳 TP. Hồ Chí Minh (Mạng VNPT Chính Chủ)": {"ip": "113.161.72.14", "risk": "AN TOÀN", "isp": "VNPT HCMC"},
-    "🇻🇳 Hà Nội (Mạng Viettel Doanh Nghiệp)": {"ip": "14.225.21.18", "risk": "AN TOÀN", "isp": "Viettel Hà Nội"},
-    "🇻🇳 Đà Nẵng (Mạng Cáp Quang FPT)": {"ip": "116.109.12.5", "risk": "AN TOÀN", "isp": "FPT Telecom"},
-    "🚨 Nghi Vấn: IP Proxy Dynamic (Lagos, Nigeria)": {"ip": "104.28.19.14", "risk": "CẢNH BÁO", "isp": "Mạng Ẩn Danh VPN/Proxy"},
-    "🚨 Nghi Vấn: Mạng Ẩn Danh Tor Node (Đông Âu)": {"ip": "104.28.19.15", "risk": "CẢNH BÁO", "isp": "Nút Mạng Tor Relay"}
-}
-
-# ================= ================= ================= =================
-# 3. MÔ PHỎNG DỮ LIỆU ĐỒ THỊ MẠNG AI (GRAPH ENGINE)
+# 2. XÂY DỰNG ĐỒ THỊ DỮ LIỆU GNN (THUẦN NETWORKX - KHÔNG PHỤ THUỘC SCIPY)
 # ================= ================= ================= =================
 @st.cache_data
 def build_enterprise_fraud_network():
@@ -177,86 +155,71 @@ def build_enterprise_fraud_network():
     devices = [f"TB-IMEI-8649{i}" for i in range(10, 15)]
     banks = [f"STK-NH-{i}" for i in range(801, 804)]
 
+    # Tọa độ mặc định thực tế cho các nhóm người dùng
+    user_coords = {
+        "KH-1008": (10.7769, 106.7009), # TP.HCM
+        "KH-1009": (10.7750, 106.7020), 
+        "KH-1010": (10.7780, 106.6990),
+        "KH-1011": (10.7730, 106.7050),
+        "KH-1012": (10.7710, 106.7010),
+    }
+
     fraud_cluster = ["KH-1008", "KH-1009", "KH-1010", "KH-1011", "KH-1012"]
     
     for u in users:
         is_fraud = u in fraud_cluster
+        lat, lng = user_coords.get(u, (21.0285 + np.random.uniform(-0.02, 0.02), 105.8542 + np.random.uniform(-0.02, 0.02)))
         G.add_node(
             u,
             label=u,
             node_type="Khách Hàng",
             status="RỦI RO RẤT CAO" if is_fraud else "XÁC MINH AN TOÀN",
             risk_score=float(np.random.uniform(91.2, 99.4)) if is_fraud else float(np.random.uniform(0.8, 9.4)),
+            lat=lat,
+            lng=lng,
             color="#ef4444" if is_fraud else "#10b981",
-            shape="dot",
-            title=f"Mã Khách Hàng: {u}<br>Loại: Tài khoản BNPL<br>Trạng thái: {'CỤM BÙNG NỢ' if is_fraud else 'AN TOÀN'}"
+            shape="dot"
         )
         
     for ip in ips:
-        is_suspicious_ip = ip in ["104.28.19.14", "104.28.19.15"]
-        G.add_node(
-            ip,
-            label=f"IP: {ip}",
-            node_type="Địa chỉ IP",
-            color="#ef4444" if is_suspicious_ip else "#3b82f6",
-            shape="diamond",
-            title=f"Hạ Tầng: Địa Chỉ IP Mạng<br>Subnet: {ip}"
-        )
+        is_suspicious = ip in ["104.28.19.14", "104.28.19.15"]
+        G.add_node(ip, label=f"IP: {ip}", node_type="IP", color="#ef4444" if is_suspicious else "#3b82f6", shape="diamond")
         
     for dev in devices:
-        G.add_node(
-            dev,
-            label=f"Thiết Bị: {dev[-4:]}",
-            node_type="Thiết Bị",
-            color="#8b5cf6",
-            shape="triangle",
-            title=f"Mã Định Danh Phần Cứng<br>Mã IMEI: {dev}"
-        )
+        G.add_node(dev, label=f"Thiết Bị: {dev[-4:]}", node_type="Thiết Bị", color="#8b5cf6", shape="triangle")
         
     for bank in banks:
-        G.add_node(
-            bank,
-            label=f"STK: {bank[-3:]}",
-            node_type="Tài Khoản Ngân Hàng",
-            color="#ec4899",
-            shape="square",
-            title=f"Tài Khoản Nhận Tiền Giải Ngân<br>Số Tài Khoản: {bank}"
-        )
+        G.add_node(bank, label=f"STK: {bank[-3:]}", node_type="Ngân Hàng", color="#ec4899", shape="square")
 
-    # Liên kết nhóm gian lận bùng nợ
+    # Mạng lưới gom cụm gian lận
     shared_ip = "104.28.19.14"
     shared_device = "TB-IMEI-864912"
     shared_bank = "STK-NH-802"
     
     for fu in fraud_cluster:
-        G.add_edge(fu, shared_ip, weight=3.5, relation="DÙNG_CHUNG_IP_PROXY")
-        G.add_edge(fu, shared_device, weight=5.0, relation="DÙNG_CHUNG_THIẾT_BỊ")
-        G.add_edge(fu, shared_bank, weight=4.0, relation="DÙNG_CHUNG_STK_NHẬN_TIỀN")
+        G.add_edge(fu, shared_ip)
+        G.add_edge(fu, shared_device)
+        G.add_edge(fu, shared_bank)
         
-    # Liên kết khách hàng sạch
-    G.add_edge("KH-1001", "113.161.72.14", relation="CHÍNH_CHỦ_TPHCM")
-    G.add_edge("KH-1001", "TB-IMEI-864910", relation="DI_ĐỘNG_CÁ_NHÂN")
-    G.add_edge("KH-1001", "STK-NH-801", relation="TÀI_KHOẢN_LƯƠNG")
-    
-    G.add_edge("KH-1002", "14.225.21.18", relation="VĂN_PHÒNG_HÀ_NỘI")
-    G.add_edge("KH-1003", "116.109.12.5", relation="MẠNG_ĐÀ_NẴNG")
-    G.add_edge("KH-1004", "104.28.19.16", relation="MẠNG_4G_DI_ĐỘNG")
-    G.add_edge("KH-1005", "TB-IMEI-864911", relation="MÁY_TÍNH_BẢNG")
-    G.add_edge("KH-1006", "STK-NH-803", relation="NHẬN_TIỀN_CÁ_NHÂN")
+    G.add_edge("KH-1001", "113.161.72.14")
+    G.add_edge("KH-1001", "TB-IMEI-864910")
+    G.add_edge("KH-1001", "STK-NH-801")
+    G.add_edge("KH-1002", "14.225.21.18")
+    G.add_edge("KH-1003", "116.109.12.5")
 
     return G
 
 G = build_enterprise_fraud_network()
 
 # ================= ================= ================= =================
-# 4. THANH TIÊU ĐỀ HỆ THỐNG
+# 3. HEADER
 # ================= ================= ================= =================
 st.markdown("""
 <div class="header-container">
     <div>
         <div class="brand-title">🛡️ HỆ THỐNG PHÁT HIỆN GIAN LẬN BNPL // AI GRAPH NEURAL NETWORK</div>
         <div style="color: #64748b; font-size: 0.82rem; margin-top: 2px;">
-            Radar Thẩm Định Rủi Ro Bùng Nợ & Trích Xuất Vị Trí Geo-IP Theo Thời Gian Thực
+            Radar Thẩm Định Rủi Ro Bùng Nợ & Định Vị Bản Đồ GPS Trực Tiếp
         </div>
     </div>
     <div class="system-status">
@@ -267,7 +230,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ================= ================= ================= =================
-# 5. THANH ĐIỀU KHIỂN BÊN TRÁI (SIDEBAR)
+# 4. THANH ĐIỀU KHIỂN SIDEBAR (ĐÃ BỎ NHẬP ĐỊA ĐIỂM THỦ CÔNG)
 # ================= ================= ================= =================
 st.sidebar.markdown("### 🎛️ BẢNG ĐIỀU HÀNH THẨM ĐỊNH")
 
@@ -277,24 +240,6 @@ selected_user = st.sidebar.selectbox(
     user_list,
     index=user_list.index("KH-1008")
 )
-
-# Tự động suy ra IP từ Vị trí
-selected_location_label = st.sidebar.selectbox(
-    "📍 Chọn Vị Trí / Địa Phương Đăng Nhập:",
-    list(LOCATION_IP_MAP.keys()),
-    index=3
-)
-
-geo_info = LOCATION_IP_MAP[selected_location_label]
-inferred_ip = geo_info["ip"]
-
-st.sidebar.markdown(f"""
-<div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 10px; margin-top: 5px;">
-    <div style="font-size: 0.75rem; color: #94a3b8;">DỮ LIỆU IP SUY RA TỪ ĐỊA LÝ:</div>
-    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: #38bdf8; font-weight:700;">IP: {inferred_ip}</div>
-    <div style="font-size: 0.75rem; color: #cbd5e1;">Nhà mạng: {geo_info['isp']}</div>
-</div>
-""", unsafe_allow_html=True)
 
 loan_request = st.sidebar.slider(
     "💵 Hạn Mức Vay BNPL Yêu Cầu (VNĐ):",
@@ -314,63 +259,29 @@ gnn_threshold = st.sidebar.slider(
 )
 
 st.sidebar.markdown("---")
-st.sidebar.caption("🔒 Chứng nhận an toàn: SOC2 Type II | ISO27001 | Mã hóa GDPR")
-
-# Cập nhật động cạnh đồ thị khi người dùng đổi IP
-G.add_edge(selected_user, inferred_ip, relation="PHIÊN_ĐĂNG_NHẬP_MỚI")
-
-if geo_info["risk"] == "CẢNH BÁO":
-    G.nodes[selected_user]["risk_score"] = max(G.nodes[selected_user]["risk_score"], 96.85)
+st.sidebar.caption("🔒 Bảo mật chuẩn ISO27001 & Định vị Geolocation GPS Real-time")
 
 # ================= ================= ================= =================
-# 6. BẢNG CHỈ SỐ METRIC GIÁM SÁT
+# 5. BẢNG KPI METRICS
 # ================= ================= ================= =================
 total_users = sum(1 for _, d in G.nodes(data=True) if d.get("node_type") == "Khách Hàng")
 fraud_count = sum(1 for _, d in G.nodes(data=True) if d.get("status") == "RỦI RO RẤT CAO")
 total_infra = len(G.nodes) - total_users
 
 k1, k2, k3, k4 = st.columns(4)
-
 with k1:
-    st.markdown(f"""
-    <div class="kpi-card">
-        <div class="kpi-title">TỔNG TÀI KHOẢN GIÁM SÁT</div>
-        <div class="kpi-value">{total_users} <span style="font-size:1rem; color:#94a3b8;">Tài khoản</span></div>
-        <div class="kpi-sub" style="color:#10b981;">🟢 Luồng dữ liệu thời gian thực</div>
-    </div>
-    """, unsafe_allow_html=True)
-
+    st.markdown(f'<div class="kpi-card"><div class="kpi-title">TỔNG TÀI KHOẢN</div><div class="kpi-value">{total_users}</div><div class="kpi-sub" style="color:#10b981;">🟢 Giám sát thời gian thực</div></div>', unsafe_allow_html=True)
 with k2:
-    st.markdown(f"""
-    <div class="kpi-card" style="border-left: 4px solid #ef4444;">
-        <div class="kpi-title">CỤM PHÁT HIỆN GIAN LẬN</div>
-        <div class="kpi-value" style="color:#fca5a5;">{fraud_count} <span style="font-size:1rem; color:#f87171;">({fraud_count/total_users*100:.1f}%)</span></div>
-        <div class="kpi-sub" style="color:#f87171;">🚨 Cảnh báo nhóm bùng nợ ảo</div>
-    </div>
-    """, unsafe_allow_html=True)
-
+    st.markdown(f'<div class="kpi-card" style="border-left: 4px solid #ef4444;"><div class="kpi-title">CỤM BÙNG NỢ GIAN LẬN</div><div class="kpi-value" style="color:#fca5a5;">{fraud_count}</div><div class="kpi-sub" style="color:#f87171;">🚨 Cảnh báo hệ thống</div></div>', unsafe_allow_html=True)
 with k3:
-    st.markdown(f"""
-    <div class="kpi-card">
-        <div class="kpi-title">THIẾT BỊ & HẠ TẦNG CHUNG</div>
-        <div class="kpi-value">{total_infra} <span style="font-size:1rem; color:#94a3b8;">Thực thể</span></div>
-        <div class="kpi-sub" style="color:#38bdf8;">🌐 IP / Thiết Bị / Ngân Hàng</div>
-    </div>
-    """, unsafe_allow_html=True)
-
+    st.markdown(f'<div class="kpi-card"><div class="kpi-title">HẠ TẦNG DÙNG CHUNG</div><div class="kpi-value">{total_infra}</div><div class="kpi-sub" style="color:#38bdf8;">🌐 IP / IMEI / STK</div></div>', unsafe_allow_html=True)
 with k4:
-    st.markdown(f"""
-    <div class="kpi-card" style="border-left: 4px solid #8b5cf6;">
-        <div class="kpi-title">TỐC ĐỘ XỬ LÝ AI (GNN)</div>
-        <div class="kpi-value" style="color:#c084fc;">14.2 <span style="font-size:1rem; color:#c084fc;">ms</span></div>
-        <div class="kpi-sub" style="color:#c084fc;">⚡ Thẩm định siêu tốc</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f'<div class="kpi-card" style="border-left: 4px solid #8b5cf6;"><div class="kpi-title">TỐC ĐỘ XỬ LÝ GNN</div><div class="kpi-value" style="color:#c084fc;">11.8 ms</div><div class="kpi-sub" style="color:#c084fc;">⚡ Định vị siêu tốc</div></div>', unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ================= ================= ================= =================
-# 7. KẾT QUẢ THẨM ĐỊNH AI & GIẢI TRÌNH RỦI RO
+# 6. KẾT QUẢ QUYẾT ĐỊNH & THÔNG TIN ĐỒ THỊ
 # ================= ================= ================= =================
 curr_node_data = G.nodes[selected_user]
 user_risk_score = curr_node_data["risk_score"]
@@ -384,162 +295,114 @@ with col_left:
     if is_high_risk:
         st.markdown(f"""
         <div class="risk-banner-danger">
-            <div style="font-weight: 800; font-size: 1.1rem; margin-bottom: 6px;">❌ TỪ CHỐI DUYỆT VAY (TỰ ĐỘNG KHÓA)</div>
-            <div style="font-size: 0.9rem;">
-                Tài khoản <b>{selected_user}</b> có cấu trúc mạng lưới trùng khớp với tổ chức bùng nợ thông qua địa chỉ IP <code>{inferred_ip}</code>.
-            </div>
+            <div style="font-weight: 800; font-size: 1.1rem; margin-bottom: 6px;">❌ TỪ CHỐI DUYỆT VAY (KHÓA TÀI KHOẢN)</div>
+            <div style="font-size: 0.9rem;">Tài khoản <b>{selected_user}</b> bị phát hiện nằm trong cụm thiết bị bùng nợ chuyên nghiệp.</div>
             <hr style="border-color: rgba(239, 68, 68, 0.3); margin: 12px 0;">
-            <div><b>Xác suất rủi ro AI (GNN):</b> <span style="font-size:1.3rem; font-weight:800; color:#ef4444;">{user_risk_score:.2f}%</span></div>
-            <div><b>Hạn mức yêu cầu:</b> {loan_request:,.0f} VNĐ → <b style="color:#ef4444;">PHÊ DUYỆT 0 VNĐ</b></div>
+            <div><b>Điểm rủi ro GNN:</b> <span style="font-size:1.3rem; font-weight:800; color:#ef4444;">{user_risk_score:.2f}%</span></div>
+            <div><b>Hạn mức đề xuất:</b> <b style="color:#ef4444;">0 VNĐ</b></div>
         </div>
         """, unsafe_allow_html=True)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("##### 🧠 Giải Trình Bằng Bằng Chứng Mạng Lưới (AI Explainer)")
-        st.error(f"""
-        * **Cảnh Báo Địa Lý IP:** Phát hiện địa chỉ IP ẩn danh rủi ro cao ({inferred_ip}).
-        * **Trùng Lặp Thiết Bị:** Dùng chung mã phần cứng IMEI với 4 tài khoản đã từng bùng nợ.
-        * **Độ Tương Đồng Cấu Trúc (Homophily):** 0.94 (Gần như tuyệt đối trùng liên kết với nhóm lừa đảo).
-        """)
     else:
         st.markdown(f"""
         <div class="risk-banner-safe">
             <div style="font-weight: 800; font-size: 1.1rem; margin-bottom: 6px;">✅ PHÊ DUYỆT HẠN MỨC (GIẢI NGÂN NGAY)</div>
-            <div style="font-size: 0.9rem;">
-                Tài khoản <b>{selected_user}</b> vượt qua toàn bộ các kiểm tra rủi ro mạng lưới và địa chỉ IP.
-            </div>
+            <div style="font-size: 0.9rem;">Tài khoản <b>{selected_user}</b> đạt chỉ số an toàn cấu trúc mạng lưới.</div>
             <hr style="border-color: rgba(16, 185, 129, 0.3); margin: 12px 0;">
-            <div><b>Xác suất rủi ro AI (GNN):</b> <span style="font-size:1.3rem; font-weight:800; color:#10b981;">{user_risk_score:.2f}%</span></div>
+            <div><b>Điểm rủi ro GNN:</b> <span style="font-size:1.3rem; font-weight:800; color:#10b981;">{user_risk_score:.2f}%</span></div>
             <div><b>Hạn mức phê duyệt:</b> <b style="color:#10b981;">{loan_request:,.0f} VNĐ</b></div>
         </div>
         """, unsafe_allow_html=True)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("##### 🧠 Giải Trình Bằng Bằng Chứng Mạng Lưới (AI Explainer)")
-        st.success(f"""
-        * **Địa Chỉ IP Chính Chủ:** Truy cập từ nhà mạng dân sự uy tín ({inferred_ip}).
-        * **Cấu Trúc Độc Lập:** Không có liên kết trùng lặp với các cụm gian lận trong vòng 3 liên kết.
-        * **Độ Tương Đồng Cấu Trúc:** 0.02 (Cực kỳ an toàn).
-        """)
 
 with col_right:
-    st.markdown("#### 🔬 BẢNG CHỈ SỐ ĐỒ THỊ MẠNG CHUYÊN SÂU")
+    st.markdown("#### 🔬 PHÂN TÍCH BẮT CẶP CẤU TRÚC ĐỒ THỊ")
     
     neighbors = list(G.neighbors(selected_user))
+    degree_cent = nx.degree_centrality(G)[selected_user] # Sử dụng thuật toán thuần NetworkX
     
-    metrics_data = {
-        "Đặc Trưng Cấu Trúc Mạng": [
-            "Địa Chỉ IP Đăng Nhập",
-            "Bậc Đồ Thị (Số Liên Kết Trực Tiếp)",
-            "Hệ Số Cụm (Clustering Coefficient)",
-            "Chỉ Số Trung Tâm (PageRank)",
-            "Tỷ Lệ Dùng Chung Phần Cứng / IP"
-        ],
-        "Chỉ Số Đo Đạc": [
-            f"{inferred_ip} ({geo_info['risk']})",
-            f"{len(neighbors)} Liên kết",
-            f"{nx.clustering(G, selected_user):.4f}",
-            f"{nx.pagerank(G)[selected_user]:.5f}",
-            "100% (Thuộc cụm bùng nợ)" if is_high_risk else "0% (Độc lập an toàn)"
-        ],
-        "Ngưỡng An Toàn": [
-            "IP Dân Sự Uy Tín",
-            "Tối đa < 5",
-            "< 0.1500",
-            "< 0.04000",
-            "< 20.0%"
-        ],
-        "Trạng Thái": [
-            "🔴 NGHI VẤN" if geo_info['risk'] == "CẢNH BÁO" else "🟢 CHÍNH CHỦ",
-            "⚠️ BẤT THƯỜNG" if len(neighbors) > 2 and is_high_risk else "🟢 BÌNH THƯỜNG",
-            "🚨 BÙNG NỢ" if is_high_risk else "🟢 AN TOÀN",
-            "⚠️ CAO" if is_high_risk else "🟢 THẤP",
-            "🔴 CỰC KỲ RỦI RO" if is_high_risk else "🟢 AN TOÀN"
-        ]
-    }
-    
-    df_metrics = pd.DataFrame(metrics_data)
+    df_metrics = pd.DataFrame({
+        "Tiêu Chí Đồ Thị": ["Số Liên Kết Trực Tiếp (Degree)", "Hệ Số Gom Cụm (Clustering)", "Độ Trung Tâm Mạng (Centrality)", "Mức Độ Rủi Ro Mạng"],
+        "Giá Trị": [f"{len(neighbors)} nút", f"{nx.clustering(G, selected_user):.4f}", f"{degree_cent:.4f}", "100% Cụm Bùng Nợ" if is_high_risk else "0.0% An Toàn"],
+        "Trạng Thái": ["⚠️ BẤT THƯỜNG" if len(neighbors) > 2 else "🟢 BÌNH THƯỜNG", "🚨 CAO" if is_high_risk else "🟢 THẤP", "⚠️ CAO" if is_high_risk else "🟢 BÌNH THƯỜNG", "🔴 NGUY HẠI" if is_high_risk else "🟢 AN TOÀN"]
+    })
     st.dataframe(df_metrics, use_container_width=True, hide_index=True)
-    
-    # Console Log
-    st.markdown("##### 📜 Nhật Ký Thẩm Định Hệ Thống (Real-time Audit Logs)")
-    st.markdown(f"""
-    <div class="log-box">
-        [KHỞI TẠO] Đã tải mô hình GraphSAGER. Sẵn sàng tính toán ma trận trọng số.<br>
-        [ĐỊA LÝ] Trích xuất vị trí địa lý thành công -> IP: {inferred_ip} ({geo_info['isp']})<br>
-        [TRUY VẤN] Đang thẩm định khách hàng ID: {selected_user}<br>
-        [GNN-WALK] Đang thực hiện gom nhóm {len(neighbors)} liên kết xung quanh {selected_user}...<br>
-        [DỰ ĐOÁN] Điểm rủi ro AI tính toán: {user_risk_score:.4f}%<br>
-        [QUYẾT ĐỊNH] Đã áp dụng ngưỡng Tau ({gnn_threshold*100}%). Trạng thái: {'KHÓA TÀI KHOẢN' if is_high_risk else 'CHO VAY'}
-    </div>
-    """, unsafe_allow_html=True)
 
 st.markdown("---")
 
 # ================= ================= ================= =================
-# 8. BẢNG ĐỒ THỊ TƯƠNG TÁC VÀ DỮ LIỆU
+# 7. BẢN ĐỒ GPS VỊ TRÍ NGƯỜI DÙNG & ĐỒ THỊ MẠNG (TABS)
 # ================= ================= ================= =================
-tab_graph, tab_data, tab_arch = st.tabs([
+tab_map, tab_graph, tab_data = st.tabs([
+    "📍 BẢN ĐỒ VỊ TRÍ NGƯỜI DÙNG (GPS MAP)",
     "🌐 ĐỒ THỊ MẠNG LIÊN KẾT REAL-TIME",
-    "📊 DANH SÁCH TÀI KHOẢN VÀ RỦI RO",
-    "🏗️ KIẾN TRÚC MÔ HÌNH AI GNN"
+    "📋 DANH SÁCH TÀI KHOẢN VAY BNPL"
 ])
 
+# --- TAB 1: BẢN ĐỒ VỊ TRÍ ---
+with tab_map:
+    st.markdown("### 🗺️ Định Vị Không Gian GPS Người Dùng Theo Thời Gian Thực")
+    st.caption("Bản đồ tự động ghim vị trí địa lý của khách hàng đang kiểm tra và các điểm gian lận lân cận.")
+    
+    user_lat = curr_node_data.get("lat", 10.7769)
+    user_lng = curr_node_data.get("lng", 106.7009)
+
+    # Khởi tạo bản đồ Folium
+    m = folium.Map(location=[user_lat, user_lng], zoom_start=13, tiles="CartoDB dark_matter")
+
+    # Ghim vị trí người dùng đang chọn
+    icon_color = "red" if is_high_risk else "green"
+    folium.Marker(
+        [user_lat, user_lng],
+        popup=f"Khách Hàng: {selected_user}\nRủi ro: {user_risk_score:.2f}%",
+        tooltip=f"👤 {selected_user} ({'RỦI RO' if is_high_risk else 'AN TOÀN'})",
+        icon=folium.Icon(color=icon_color, icon="user", prefix="fa")
+    ).add_to(m)
+
+    # Thêm vòng tròn vùng nguy cơ nếu rủi ro cao
+    if is_high_risk:
+        folium.Circle(
+            location=[user_lat, user_lng],
+            radius=1200,
+            color="#ef4444",
+            fill=True,
+            fill_color="#ef4444",
+            fill_opacity=0.2,
+            popup="Vùng cảnh báo tập trung cụm tài khoản bùng nợ BNPL"
+        ).add_to(m)
+
+    st_folium(m, width="100%", height=500)
+
+# --- TAB 2: ĐỒ THỊ MẠNG ---
 with tab_graph:
     st.markdown("### 🕸️ Sơ Đồ Cấu Trúc Mạng Lưới Rủi Ro (Heterogeneous Graph)")
-    st.caption("🔴 **Đỏ:** Cụm bùng nợ / IP rủi ro | 🟢 **Xanh lá:** Khách hàng an toàn | 🟡 **Vàng:** Khách hàng đang chọn | 🔷 **Xanh dương/Tím/Hồng:** Hạ tầng dùng chung")
-
-    net = Network(height="580px", width="100%", bgcolor="#020617", font_color="#f8fafc")
+    net = Network(height="500px", width="100%", bgcolor="#020617", font_color="#f8fafc")
     net.from_nx(G)
-    
     net.barnes_hut(gravity=-4500, central_gravity=0.2, spring_length=110)
     
     for node in net.nodes:
         if node["id"] == selected_user:
-            node["size"] = 38
-            node["borderWidth"] = 4
+            node["size"] = 35
             node["color"] = "#facc15"
-            node["shadow"] = True
         elif node.get("node_type") == "Khách Hàng":
-            node["size"] = 22
+            node["size"] = 20
         else:
-            node["size"] = 14
+            node["size"] = 12
 
     net.save_graph("graph_enterprise.html")
-
     with open("graph_enterprise.html", "r", encoding="utf-8") as f:
-        html_data = f.read()
-        
-    components.html(html_data, height=600)
+        components.html(f.read(), height=520)
 
+# --- TAB 3: DỮ LIỆU TÀI KHOẢN ---
 with tab_data:
-    st.markdown("### 📋 Danh Sách Quản Lý Tài Khoản Vay BNPL")
-    
-    table_rows = []
-    for node, data in G.nodes(data=True):
-        if data.get("node_type") == "Khách Hàng":
-            st_flag = data.get("status") == "RỦI RO RẤT CAO" or data.get("risk_score", 0) > 80
-            table_rows.append({
-                "Mã Khách Hàng": node,
-                "Phân Loại": "Khách Vay BNPL",
-                "Phân Loại Rủi Ro": "🚨 CỤM BÙNG NỢ" if st_flag else "🟢 XÁC MINH AN TOÀN",
-                "Xác Suất Bùng Nợ (GNN)": f"{data['risk_score']:.2f}%",
-                "Hạn Mức Phê Duyệt": "0 VNĐ" if st_flag else "50,000,000 VNĐ",
-                "Quy Trình Khuyến Nghị": "Khóa tài khoản khẩn cấp" if st_flag else "Giải ngân tự động"
+    st.markdown("### 📋 Danh Sách Quản Lý Tài Khoản Vay")
+    rows = []
+    for n, d in G.nodes(data=True):
+        if d.get("node_type") == "Khách Hàng":
+            risk = d.get("risk_score", 0) > 80
+            rows.append({
+                "Mã Khách Hàng": n,
+                "Tọa Độ GPS": f"{d.get('lat', 0):.4f}, {d.get('lng', 0):.4f}",
+                "Trạng Thái AI": "🚨 BÙNG NỢ" if risk else "🟢 AN TOÀN",
+                "Xác Suất Bùng Nợ": f"{d.get('risk_score', 0):.2f}%",
+                "Khuyến Nghị": "Tự động khóa" if risk else "Giải ngân ngay"
             })
-            
-    df_registry = pd.DataFrame(table_rows)
-    st.dataframe(df_registry, use_container_width=True)
-
-with tab_arch:
-    st.markdown("### 🏗️ Nguyên Lý Hoạt Động Của Mô Hình GraphSAGER Neural Network")
-    st.markdown("""
-    Hệ thống **Nexus Fraud Shield** sử dụng mạng Nơ-ron Đồ thị Đa quan hệ (Heterogeneous GNN) để phát hiện gian lận bùng nợ BNPL siêu tốc:
-
-    1. **Tầng Xây Dựng Đồ Thị:** Chuyển đổi nhật ký giao dịch thành đồ thị 4 thành phần $\mathcal{G} = (\mathcal{V}, \mathcal{E}, \mathcal{T})$.
-    2. **Gom Nhóm Xóm Giềng (Neighborhood Aggregation):** Sử dụng thuật toán GraphSAGE tổng hợp đặc trưng từ các nút lân cận:
-       $$\mathbf{h}_{v}^{k} = \sigma \left( \mathbf{W}^k \cdot 	ext{CONCAT} \left( \mathbf{h}_v^{k-1}, 	ext{AGG}_{r \in \mathcal{R}} \{ \mathbf{h}_u^{k-1}, orall u \in \mathcal{N}_r(v) \} 
-ight) 
-ight)$$
-    3. **Trích Xuất Vị Trí Geo-IP:** Tự động tính toán khoảng cách không gian giữa địa chỉ IP đăng nhập và cụm hạ tầng gian lận để đưa ra điểm số chính xác nhất.
-    """)
+    st.dataframe(pd.DataFrame(rows), use_container_width=True)
